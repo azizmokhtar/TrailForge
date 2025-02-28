@@ -49,7 +49,7 @@ async def webhook(request: Request):
             result = await bot.leveragedMarketOrder(symbol=ticker, side="Buy", amount=amount)
             # Log the order details
             logging.info(f"BUY | Amount: {amount} | Price: {result[0]} | Order ID: {result[1]}")
-            return {"status": "success", "message": "Buy order executed", "result": result}
+            return {"status": "buy order success", "message": "Buy order executed", "result": result}
 
         # Case of market close order
         elif event == "sell":
@@ -57,7 +57,7 @@ async def webhook(request: Request):
             result = await bot.leveragedMarketOrder(symbol=ticker, side="Sell", amount=amount)
             # Log the order details
             logging.info(f"SELL | Amount: {amount} | Price: {result[0]} | Order ID: {result[1]}")
-            return {"status": "success", "message": "Sell order executed", "result": result}
+            return {"status": "close order success", "message": "Sell order executed", "result": result}
 
         else:
             return {"status": "error", "message": f"Unknown event: {event}"}
