@@ -3,24 +3,26 @@ import ccxt
 import time 
 import pandas as pd
 from datetime import datetime
+from config.keys import hyperliquid_keys
 
-walletAdress = "0x673Aa1aF74F2436BCbA24DC2A80089B77A3D10e8"
-privateKey = "0xe4ac2035a8ac1052cc93e92592398bd4644ef7cec1352126543c0fa6a806e4aa"
-
+walletAdress = hyperliquid_keys.get('walletAdress')
+privateKey = hyperliquid_keys.get('privateKey')
 
 class hyperLiquid:
-    def __init__(self, wallet_address, private_key):
-        self.wallet_address = "0x673Aa1aF74F2436BCbA24DC2A80089B77A3D10e8"
-        self.private_key = "0xe4ac2035a8ac1052cc93e92592398bd4644ef7cec1352126543c0fa6a806e4aa"
+    def __init__(self, wallet_address=None, private_key=None):
+        # Use provided keys or fall back to defaults from config
+        self.wallet_address = wallet_address or walletAdress
+        self.private_key = private_key or privateKey
+
+        # Initialize the exchange connection
         self.exchange = ccxt.hyperliquid({
-            "walletAddress": wallet_address,
-            "privateKey": private_key,
+            "walletAddress": self.wallet_address,
+            "privateKey": self.private_key,
             "enableRateLimit": True,
             "options": {
                 "defaultType": "future",
             },
         })
-
     @classmethod
     async def create(cls, x= "0x673Aa1aF74F2436BCbA24DC2A80089B77A3D10e8", private_key = "0xe4ac2035a8ac1052cc93e92592398bd4644ef7cec1352126543c0fa6a806e4aa"):
         instance = cls(x, private_key)
@@ -121,19 +123,30 @@ class hyperLiquid:
             print("Leverage set")
         except Exception as e:
             print(f"Error setting leverage: {e}")
-
+    
+    # Checks: if Buy: open order with amount
+            # if Sell: close all of order // Good v1 amount bug is fixed
     async def leveragedMarketOrder(self, symbol, side, amount, price):
         try:
-            if side == 'Buy':
-                amount_in_quote = amount / price
-                order = self.exchange.create_market_order(symbol=symbol, side=side, amount=amount_in_quote, price=price)
-                buy_price = order['info']['filled']['avgPx']
-                order_id = order['info']['filled']['oid']
-            elif side == 'Sell':
-                amount_in_quote = amount / price
-                order = self.exchange.create_market_order(symbol=symbol, side=side, amount=amount, price=price, params={'reduceOnly': True})
-                buy_price = order['info']['filled']['avgPx']
-                order_id = order['info']['filled']['oid']
+            # Fetch the current price for the symbol
+            ticker_data = self.fetchTicker(symbol)
+            if not ticker_data:
+                print("Failed to fetch ticker data.")
+                return None, None
+            price = ticker_data["ask"] if side == "Buy" else ticker_data["bid"]
+            # Calculate the amount (in base asset) to achieve the desired order value
+            amount_in_base = amount / price
+            # Place the market order
+            order = self.exchange.create_market_order(
+                symbol=symbol,
+                side=side.lower(),
+                amount=amount_in_base,
+                price=price,
+                params={'reduceOnly': True} if side == "Sell" else {}
+            )
+            # Extract relevant information from the order response
+            buy_price = order['info']['filled']['avgPx']
+            order_id = order['info']['filled']['oid']
             return buy_price, order_id
         except Exception as e:
             print(f"Error placing leveraged market order: {e}")
@@ -168,7 +181,8 @@ class hyperLiquid:
             print(f"Error fetching open orders: {e}")
             return None
 
-    async def leverageLimitOrder(self, symbol, side, amount, price):
+    # Good v1
+    async def leverageLimitCloseOrder(self, symbol, side, amount, price):
         try:
             amount_in_quote = amount / price
             order = self.exchange.create_limit_order(symbol=symbol, side=side, amount=amount_in_quote, price=price, params={'reduceOnly': True})
@@ -179,6 +193,7 @@ class hyperLiquid:
             return None
 
     # This is the one used for now its good
+    # Good v1
     async def leverageLimitBuyOrder(self, symbol, side, amount, price):
         try:
             amount_in_quote = amount / price
@@ -190,8 +205,8 @@ class hyperLiquid:
             return None
 
 
-
-    async def updateLimitOrders(self, id, symbol, side, amount, price):
+    # Good v1
+    async def updateLimitCloseOrder(self, id, symbol, side, amount, price):
         try:
             self.exchange.cancel_order(id=id, symbol=symbol)
             order_id = self.leverageLimitOrder(symbol, side=side, amount=amount, price=price, params={'reduceOnly': True})

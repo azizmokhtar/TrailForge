@@ -1,9 +1,9 @@
 from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
-import asyncio
 import logging
 from datetime import datetime
 from hyperliquid import hyperLiquid 
+from config.hyperliquid_symbol_map import hyperliquid_symbol_mapper 
 
 
 # Initialize FastAPI app
@@ -36,59 +36,27 @@ async def webhook(request: Request):
         # Extract required fields from the payload
         symbol = data.get("symbol")
         amount = 15  # Fixed amount for simplicity
-        if symbol == 'btc':
-            ticker = "BTC/USDC:USDC"
-        elif symbol == 'eth':
-            ticker = "ETH/USDC:USDC"
-        elif symbol == 'sol':
-            ticker = "SOL/USDC:USDC"
-        elif symbol == 'xrp':
-            ticker = "XRP/USDC:USDC"
-        elif symbol == 'sui':
-            ticker = "SUI/USDC:USDC"
-        if not symbol:
-            ticker = ''
-            return {"status": "error", "message": "Missing required field: symbol"}
+        ticker = hyperliquid_symbol_mapper.get(symbol)
+        if not ticker:
+            return {"status": "error", "message": f"Invalid or missing symbol: {symbol}"}
 
         # Initialize the bot asynchronously
         bot = await hyperLiquid.create()
 
         # Case of market buy
         if event == "buy":
-             # Fetch the current ask price
-            ticker_data = await bot.fetchTicker(symbol=ticker)
-            if ticker_data and "ask" in ticker_data:
-                price = ticker_data["ask"]
-                print(f"Price is {price}")
-            else:
-                return {"status": "error", "message": "Failed to fetch ask price"}
-
             # Place a buy order
-            result = await bot.leveragedMarketOrder(symbol=ticker, side="Buy", amount=amount, price=price)
-            order_id = result[1]
-
+            result = await bot.leveragedMarketOrder(symbol=ticker, side="Buy", amount=amount)
             # Log the order details
-            logging.info(f"BUY | Amount: {amount} | Price: {price} | Order ID: {order_id}")
-
-            print(result)
+            logging.info(f"BUY | Amount: {amount} | Price: {result[0]} | Order ID: {result[1]}")
             return {"status": "success", "message": "Buy order executed", "result": result}
 
         # Case of market close order
         elif event == "sell":
-            # Fetch the current bid price
-            ticker_data = await bot.fetchTicker(symbol=ticker)
-            if ticker_data and "bid" in ticker_data:
-                price = ticker_data["bid"]
-            else:
-                return {"status": "error", "message": "Failed to fetch bid price"}
-
             # Place a sell order
-            result = await bot.leveragedMarketOrder(symbol=ticker, side="Sell", amount=amount, price=price)
-            order_id = result[1]
-
+            result = await bot.leveragedMarketOrder(symbol=ticker, side="Sell", amount=amount)
             # Log the order details
-            logging.info(f"SELL | Amount: {amount} | Price: {price} | Order ID: {order_id}")
-
+            logging.info(f"SELL | Amount: {amount} | Price: {result[0]} | Order ID: {result[1]}")
             return {"status": "success", "message": "Sell order executed", "result": result}
 
         else:
