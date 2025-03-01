@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 import logging
 from datetime import datetime
-from hyperliquid import hyperLiquid 
+from hyperliquid import HyperLiquid 
 from config.hyperliquid_symbol_map import hyperliquid_symbol_mapper 
 
 
@@ -41,7 +41,7 @@ async def webhook(request: Request):
             return {"status": "error", "message": f"Invalid or missing symbol: {symbol}"}
 
         # Initialize the bot asynchronously
-        bot = await hyperLiquid.create()
+        bot = await HyperLiquid.create()
 
         # Case of market buy
         if event == "buy":

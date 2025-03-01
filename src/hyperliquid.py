@@ -3,6 +3,7 @@ import ccxt
 import time 
 import pandas as pd
 from datetime import datetime
+import asyncio
 
 
 class hyperLiquid:
@@ -244,8 +245,3 @@ class HyperLiquid:
             return None
         
 
-bot = hyperLiquid.create()
-symbol = "BTC/USDC:USDC"
-leverage = 4
-#order = bot.leveragedMarketOrder(symbol=symbol, side="buy", amount= 15)
-set_leverage = bot.setLeverage(leverage=leverage, symbol=symbol)
