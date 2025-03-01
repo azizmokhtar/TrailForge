@@ -127,7 +127,7 @@ class hyperLiquid:
             return None
     
     #===============================================================================================================
-    # MANIPULATION functions for according exchange account
+    # MANIPULATION functions for according exchange account (for now only futures is taken into consideration, future changes coming)
     #===============================================================================================================
     async def setLeverage(self, leverage, symbol):
         try:

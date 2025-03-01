@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 import logging
 from datetime import datetime
-from hyperliquid import hyperLiquid 
+from src.hyperliquid import hyperLiquid 
 from config.hyperliquid_symbol_map import hyperliquid_symbol_mapper 
 
 
