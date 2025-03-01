@@ -3,50 +3,68 @@ import ccxt
 import time 
 import pandas as pd
 from datetime import datetime
-from config.keys import hyperliquid_keys
 
-walletAdress = hyperliquid_keys.get('walletAdress')
-privateKey = hyperliquid_keys.get('privateKey')
 
 class hyperLiquid:
-    def __init__(self, wallet_address=None, private_key=None):
-        # Use provided keys or fall back to defaults from config
-        self.wallet_address = wallet_address or walletAdress
-        self.private_key = private_key or privateKey
-
-        # Initialize the exchange connection
+#===============================================================================================================
+# Bot Initialization, will ask for keys and adress as input (works only for hyperliquid format for now)
+#===============================================================================================================
+    def __init__(self, wallet_address, private_key):
+        # Initialize the exchange connection with provided keys
         self.exchange = ccxt.hyperliquid({
-            "walletAddress": self.wallet_address,
-            "privateKey": self.private_key,
+            "walletAddress": wallet_address,
+            "privateKey": private_key,
             "enableRateLimit": True,
             "options": {
                 "defaultType": "future",
             },
         })
-    @classmethod
-    async def create(cls, x= "0x673Aa1aF74F2436BCbA24DC2A80089B77A3D10e8", private_key = "0xe4ac2035a8ac1052cc93e92592398bd4644ef7cec1352126543c0fa6a806e4aa"):
-        instance = cls(x, private_key)
-        return instance
 
-    async def fetchTicker(self, symbol):
-        try:
-            data = self.exchange.fetch_ticker(symbol)
-            return {
-                "bid": data["bid"],
-                "ask": data["ask"],
-                "last": data["last"]
-            }
-        except Exception as e:
-            print(f"Error fetching ticker: {e}")
-            return None
+    @classmethod
+    async def create(cls, wallet_address=None, private_key=None):
+        """
+        Create an instance of the HyperLiquid class.
+        If wallet_address or private_key are not provided, prompt the user for input.
+        """
+        if not wallet_address or not private_key:
+            wallet_address, private_key = cls.get_user_credentials()
+
+        # Create and return an instance of the class
+        return cls(wallet_address, private_key)
+
+    @staticmethod
+    async def get_user_credentials():
+        """
+        Prompt the user to input their wallet address and private key.
+        Returns:
+            tuple: (wallet_address, private_key)
+        """
+        while True:
+            wallet_address = input("Enter your wallet address (e.g., 0x...): ").strip()
+            if wallet_address.startswith("0x") and len(wallet_address) == 42:
+                break
+            print("Invalid wallet address format. It must be a 42-character Ethereum address starting with '0x'.")
+
+        while True:
+            private_key = input("Enter your private key (e.g., 0x...): ").strip()
+            if private_key.startswith("0x") and len(private_key) == 66:
+                break
+            print("Invalid private key format. It must be a 66-character string starting with '0x'.")
+
+        return wallet_address, private_key
+    
  
+import asyncio
+import pandas as pd
+from datetime import datetime
+
+class HyperLiquid:
     #===============================================================================================================
-    # Market data 
+    # READ functions for according exchange account 
     #===============================================================================================================
-        # This is to be work done (for better usability, still raw)
     async def fetchBalance(self):
         try:
-            balance = self.exchange.fetch_balance(params={'user': self.wallet_adress})
+            balance = await self.exchange.fetch_balance(params={'user': self.wallet_address})
             # Extracting valuable information
             account_value = float(balance['info']['marginSummary']['accountValue'])
             total_margin_used = float(balance['info']['marginSummary']['totalMarginUsed'])
@@ -62,7 +80,7 @@ class hyperLiquid:
 
     async def fetchMarkets(self):
         try:
-            data = self.exchange.fetch_markets()
+            data = await self.exchange.fetch_markets()
             df = pd.DataFrame(data)
             # Step 2: Extract spot and linear symbols
             spot_symbols = [
@@ -93,17 +111,16 @@ class hyperLiquid:
     async def fetchOHLCVData(self, symbol, timeframe, ticks):
         try:
             print(f"Fetching new bars for {datetime.now().isoformat()}")
-            bars = self.exchange.fetch_ohlcv(symbol=symbol, timeframe=timeframe, limit=(ticks+1))  # limit is the number of ticks
+            bars = await self.exchange.fetch_ohlcv(symbol=symbol, timeframe=timeframe, limit=(ticks+1))  # limit is the number of ticks
             df = pd.DataFrame(bars[:-1], columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
             df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
             print(df)
         except Exception as e:
             print(f"Error fetching OHLCV data: {e}")
 
-
     async def fetchTicker(self, symbol):
         try:
-            data = self.exchange.fetch_ticker(symbol)
+            data = await self.exchange.fetch_ticker(symbol)
             return {
                 "bid": data["bid"],
                 "ask": data["ask"],
@@ -114,30 +131,28 @@ class hyperLiquid:
             return None
     
     #===============================================================================================================
-    # Account manips 
+    # MANIPULATION functions for according exchange account
     #===============================================================================================================
-
     async def setLeverage(self, leverage, symbol):
         try:
-            self.exchange.set_leverage(leverage=leverage, symbol=symbol)
+            await self.exchange.set_leverage(leverage=leverage, symbol=symbol)
             print("Leverage set")
         except Exception as e:
             print(f"Error setting leverage: {e}")
-    
-    # Checks: if Buy: open order with amount
-            # if Sell: close all of order // Good v1 amount bug is fixed
-    async def leveragedMarketOrder(self, symbol, side, amount, price):
+
+    async def leveragedMarketOrder(self, symbol, side, amount):
         try:
             # Fetch the current price for the symbol
-            ticker_data = self.fetchTicker(symbol)
+            ticker_data = await self.fetchTicker(symbol)
             if not ticker_data:
                 print("Failed to fetch ticker data.")
                 return None, None
+
             price = ticker_data["ask"] if side == "Buy" else ticker_data["bid"]
             # Calculate the amount (in base asset) to achieve the desired order value
             amount_in_base = amount / price
             # Place the market order
-            order = self.exchange.create_market_order(
+            order = await self.exchange.create_market_order(
                 symbol=symbol,
                 side=side.lower(),
                 amount=amount_in_base,
@@ -147,6 +162,7 @@ class hyperLiquid:
             # Extract relevant information from the order response
             buy_price = order['info']['filled']['avgPx']
             order_id = order['info']['filled']['oid']
+
             return buy_price, order_id
         except Exception as e:
             print(f"Error placing leveraged market order: {e}")
@@ -155,7 +171,7 @@ class hyperLiquid:
     async def closeAllPositions(self, symbol, side, amount, price):
         try:
             amount_in_quote = amount / price
-            order = self.exchange.create_market_order(symbol=symbol, side=side, amount=amount_in_quote, price=price)
+            order = await self.exchange.create_market_order(symbol=symbol, side=side, amount=amount_in_quote, price=price)
             buy_price = order['info']['filled']['avgPx']
             order_id = order['info']['filled']['oid']
             return buy_price, order_id
@@ -163,10 +179,9 @@ class hyperLiquid:
             print(f"Error closing all positions: {e}")
             return None, None
 
-    # ONLY when 1 ticker traded
     async def fetchOpenOrders(self):
         try:
-            positions = self.exchange.fetch_positions()
+            positions = await self.exchange.fetch_positions()
             if positions == []:
                 print("No open positions found")
                 return None
@@ -181,42 +196,37 @@ class hyperLiquid:
             print(f"Error fetching open orders: {e}")
             return None
 
-    # Good v1
-    async def leverageLimitCloseOrder(self, symbol, side, amount, price):
+    async def leverageLimitOrder(self, symbol, side, amount, price):
         try:
             amount_in_quote = amount / price
-            order = self.exchange.create_limit_order(symbol=symbol, side=side, amount=amount_in_quote, price=price, params={'reduceOnly': True})
+            order = await self.exchange.create_limit_order(symbol=symbol, side=side, amount=amount_in_quote, price=price, params={'reduceOnly': True})
             order_id = order['info']['resting']['oid']
             return order_id
         except Exception as e:
             print(f"Error placing leveraged limit order: {e}")
             return None
 
-    # This is the one used for now its good
-    # Good v1
     async def leverageLimitBuyOrder(self, symbol, side, amount, price):
         try:
             amount_in_quote = amount / price
-            order = self.exchange.create_limit_order(symbol=symbol, side=side, amount=amount_in_quote, price=price)
+            order = await self.exchange.create_limit_order(symbol=symbol, side=side, amount=amount_in_quote, price=price)
             order_id = order['info']['resting']['oid']
             return order_id
         except Exception as e:
             print(f"Error placing leveraged limit buy order: {e}")
             return None
 
-
-    # Good v1
-    async def updateLimitCloseOrder(self, id, symbol, side, amount, price):
+    async def updateLimitOrders(self, id, symbol, side, amount, price):
         try:
-            self.exchange.cancel_order(id=id, symbol=symbol)
-            order_id = self.leverageLimitOrder(symbol, side=side, amount=amount, price=price, params={'reduceOnly': True})
+            await self.exchange.cancel_order(id=id, symbol=symbol)
+            order_id = await self.leverageLimitOrder(symbol, side=side, amount=amount, price=price, params={'reduceOnly': True})
             return order_id
         except Exception as e:
             print(f"Error updating limit orders: {e}")
             return None
 
     #===============================================================================================================
-    # Utils
+    # random Utils
     #===============================================================================================================
 
     async def calculateNextDca(self, price, deviation):
@@ -232,4 +242,10 @@ class hyperLiquid:
         except Exception as e:
             print(f"Error calculating take profit: {e}")
             return None
-    
+        
+
+bot = hyperLiquid.create()
+symbol = "BTC/USDC:USDC"
+leverage = 4
+#order = bot.leveragedMarketOrder(symbol=symbol, side="buy", amount= 15)
+set_leverage = bot.setLeverage(leverage=leverage, symbol=symbol)
