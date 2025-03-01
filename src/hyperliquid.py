@@ -1,15 +1,13 @@
 import ccxt
-import ccxt
-import time 
+import time
 import pandas as pd
 from datetime import datetime
 import asyncio
 
-
 class hyperLiquid:
-#===============================================================================================================
-# Bot Initialization, will ask for keys and adress as input (works only for hyperliquid format for now)
-#===============================================================================================================
+    #===============================================================================================================
+    # Bot Initialization, will ask for keys and address as input (works only for hyperliquid format for now)
+    #===============================================================================================================
     def __init__(self, wallet_address, private_key):
         # Initialize the exchange connection with provided keys
         self.exchange = ccxt.hyperliquid({
@@ -29,29 +27,29 @@ class hyperLiquid:
         """
         if not wallet_address or not private_key:
             wallet_address, private_key = cls.get_user_credentials()
-
+            
         # Create and return an instance of the class
         return cls(wallet_address, private_key)
 
     @staticmethod
-    async def get_user_credentials():
+    def get_user_credentials():
         """
         Prompt the user to input their wallet address and private key.
         Returns:
-            tuple: (wallet_address, private_key)
+        tuple: (wallet_address, private_key)
         """
         while True:
             wallet_address = input("Enter your wallet address (e.g., 0x...): ").strip()
             if wallet_address.startswith("0x") and len(wallet_address) == 42:
                 break
             print("Invalid wallet address format. It must be a 42-character Ethereum address starting with '0x'.")
-
+            
         while True:
             private_key = input("Enter your private key (e.g., 0x...): ").strip()
             if private_key.startswith("0x") and len(private_key) == 66:
                 break
             print("Invalid private key format. It must be a 66-character string starting with '0x'.")
-
+            
         return wallet_address, private_key
     
  
