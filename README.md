@@ -1,0 +1,5 @@
+TrailForge is an API endpoint specifically designed for cryptocurrency trading, starting with HyperLiquid as the initial exchange of choice due to the personal preference of the developer. This project aims to evolve into a robust platform that supports multiple exchanges, offering users a comprehensive UI to manage accounts and subaccounts seamlessly.
+
+TrailForge will empower traders by providing tools to backtest personal strategies, optimize them using machine learning, and eventually incorporate a wide array of functionalities to become an indispensable asset in the hands of algorithmic traders. The vision is to create a powerful, "aspiring-to-be-complete" tool that caters to the dynamic needs of crypto traders.
+
+The name *TrailForge* draws inspiration from the enduring trails carved by camels across the vast, unpredictable desert seas. Amidst uncertainty, volatility, and indecisiveness, a camel remains steadfast, forging ahead with unwavering determination—much like the resilience required in navigating the crypto markets.
