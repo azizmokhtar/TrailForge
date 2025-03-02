@@ -114,7 +114,7 @@ class hyperLiquid:
 
     async def fetchTicker(self, symbol):
         try:
-            data = await self.exchange.fetch_ticker(symbol)
+            data = self.exchange.fetch_ticker(symbol)
             return {
                 "bid": data["bid"],
                 "ask": data["ask"],
