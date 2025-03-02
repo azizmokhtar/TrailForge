@@ -69,33 +69,33 @@ async def webhook(request: Request):
         # Case of market buy
         if event == "buy":
             # Properly await the coroutine to get the result
-            buy_price, order_id = await bot.leveragedMarketOrder(symbol=ticker, side="Buy", amount=amount)
+            order = await bot.leveragedMarketOrder(symbol=ticker, side="Buy", amount=amount)
             
-            if buy_price is None or order_id is None:
+            if order[0] == None:
                 return {"status": "error", "message": "Failed to execute buy order"}
                 
             # Log the order details
-            logging.info(f"BUY | Amount: {amount} | Price: {buy_price} | Order ID: {order_id}")
+            logging.info(f"BUY | Amount: {amount} | Price: {order[0]} | Order ID: {order[1]}")
             return {
                 "status": "buy order success", 
                 "message": "Buy order executed", 
-                "result": [buy_price, order_id]
+                "result": [{order[0]}, {order[1]}]
             }
             
         # Case of market close order
         elif event == "sell":
             # Properly await the coroutine to get the result
-            sell_price, order_id = await bot.leveragedMarketOrder(symbol=ticker, side="Sell", amount=amount)
+            order = await bot.leveragedMarketOrder(symbol=ticker, side="Sell", amount=amount)
             
-            if sell_price is None or order_id is None:
+            if order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
                 
             # Log the order details
-            logging.info(f"SELL | Amount: {amount} | Price: {sell_price} | Order ID: {order_id}")
+            logging.info(f"SELL | Amount: {amount} | Price: Price: {order[0]} | Order ID: {order[1]}")
             return {
                 "status": "sell order success", 
                 "message": "Sell order executed", 
-                "result": [sell_price, order_id]
+                "result": [{order[0]}, {order[1]}]
             }
             
         else:
