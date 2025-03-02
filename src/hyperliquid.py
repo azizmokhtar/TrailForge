@@ -58,7 +58,7 @@ class hyperLiquid:
     #===============================================================================================================
     async def fetchBalance(self):
         try:
-            balance = await self.exchange.fetch_balance(params={'user': self.wallet_address})
+            balance = self.exchange.fetch_balance(params={'user': self.wallet_address})
             # Extracting valuable information
             account_value = float(balance['info']['marginSummary']['accountValue'])
             total_margin_used = float(balance['info']['marginSummary']['totalMarginUsed'])
@@ -74,7 +74,7 @@ class hyperLiquid:
 
     async def fetchMarkets(self):
         try:
-            data = await self.exchange.fetch_markets()
+            data = self.exchange.fetch_markets()
             df = pd.DataFrame(data)
             # Step 2: Extract spot and linear symbols
             spot_symbols = [
@@ -105,7 +105,7 @@ class hyperLiquid:
     async def fetchOHLCVData(self, symbol, timeframe, ticks):
         try:
             print(f"Fetching new bars for {datetime.now().isoformat()}")
-            bars = await self.exchange.fetch_ohlcv(symbol=symbol, timeframe=timeframe, limit=(ticks+1))  # limit is the number of ticks
+            bars = self.exchange.fetch_ohlcv(symbol=symbol, timeframe=timeframe, limit=(ticks+1))  # limit is the number of ticks
             df = pd.DataFrame(bars[:-1], columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
             df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
             print(df)
@@ -137,7 +137,7 @@ class hyperLiquid:
     async def leveragedMarketOrder(self, symbol, side, amount):
         try:
             # Fetch the current price for the symbol
-            ticker_data = await self.fetchTicker(symbol)
+            ticker_data = self.fetchTicker(symbol) # DO NOT USE AWAIT WITH CCCXT REST SORDERS 
             if not ticker_data:
                 print("Failed to fetch ticker data.")
                 return None, None
@@ -146,7 +146,7 @@ class hyperLiquid:
             # Calculate the amount (in base asset) to achieve the desired order value
             amount_in_base = amount / price
             # Place the market order
-            order = await self.exchange.create_market_order(
+            order =  self.exchange.create_market_order(
                 symbol=symbol,
                 side=side.lower(),
                 amount=amount_in_base,
@@ -165,7 +165,7 @@ class hyperLiquid:
     async def closeAllPositions(self, symbol, side, amount, price):
         try:
             amount_in_quote = amount / price
-            order = await self.exchange.create_market_order(symbol=symbol, side=side, amount=amount_in_quote, price=price)
+            order = self.exchange.create_market_order(symbol=symbol, side=side, amount=amount_in_quote, price=price)
             buy_price = order['info']['filled']['avgPx']
             order_id = order['info']['filled']['oid']
             return buy_price, order_id
@@ -175,7 +175,7 @@ class hyperLiquid:
 
     async def fetchOpenOrders(self):
         try:
-            positions = await self.exchange.fetch_positions()
+            positions = self.exchange.fetch_positions()
             if positions == []:
                 print("No open positions found")
                 return None
@@ -193,7 +193,7 @@ class hyperLiquid:
     async def leverageLimitOrder(self, symbol, side, amount, price):
         try:
             amount_in_quote = amount / price
-            order = await self.exchange.create_limit_order(symbol=symbol, side=side, amount=amount_in_quote, price=price, params={'reduceOnly': True})
+            order = self.exchange.create_limit_order(symbol=symbol, side=side, amount=amount_in_quote, price=price, params={'reduceOnly': True})
             order_id = order['info']['resting']['oid']
             return order_id
         except Exception as e:
@@ -203,7 +203,7 @@ class hyperLiquid:
     async def leverageLimitBuyOrder(self, symbol, side, amount, price):
         try:
             amount_in_quote = amount / price
-            order = await self.exchange.create_limit_order(symbol=symbol, side=side, amount=amount_in_quote, price=price)
+            order = self.exchange.create_limit_order(symbol=symbol, side=side, amount=amount_in_quote, price=price)
             order_id = order['info']['resting']['oid']
             return order_id
         except Exception as e:
@@ -213,7 +213,7 @@ class hyperLiquid:
     async def updateLimitOrders(self, id, symbol, side, amount, price):
         try:
             await self.exchange.cancel_order(id=id, symbol=symbol)
-            order_id = await self.leverageLimitOrder(symbol, side=side, amount=amount, price=price, params={'reduceOnly': True})
+            order_id = self.leverageLimitOrder(symbol, side=side, amount=amount, price=price, params={'reduceOnly': True})
             return order_id
         except Exception as e:
             print(f"Error updating limit orders: {e}")
