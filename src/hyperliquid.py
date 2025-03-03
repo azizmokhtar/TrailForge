@@ -129,7 +129,7 @@ class hyperLiquid:
     #===============================================================================================================
     async def setLeverage(self, leverage, symbol):
         try:
-            await self.exchange.set_leverage(leverage=leverage, symbol=symbol)
+            self.exchange.set_leverage(leverage=leverage, symbol=symbol)
             print("Leverage set")
         except Exception as e:
             print(f"Error setting leverage: {e}")
@@ -137,7 +137,7 @@ class hyperLiquid:
     async def leveragedMarketOrder(self, symbol, side, amount):
         try:
             # Fetch the current price for the symbol
-            ticker_data = self.fetchTicker(symbol) # DO NOT USE AWAIT WITH CCCXT REST SORDERS 
+            ticker_data = await self.fetchTicker(symbol) # DO NOT USE AWAIT WITH CCCXT REST SORDERS 
             if not ticker_data:
                 print("Failed to fetch ticker data.")
                 return None, None
