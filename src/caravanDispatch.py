@@ -29,28 +29,28 @@ async def lifespan(app: FastAPI):
 # Initialize FastAPI app with lifespan
 app = FastAPI(lifespan=lifespan)
 
-# Set up logging for orders
-logging.basicConfig(
-    filename='orders.log',
-    level=logging.INFO,
-    format='%(asctime)s - SIDE: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
+# logger configs for both executed orders and also alerts ( raw and filtered )
+def orderLogger(symbol, side, amount, price, order_id):
+    # Create a file path for this cryptocurrency
+    logFile = f"logs/executed_{symbol.lower()}.log"
+    # Create a simple message to log
+    timestamp = logging.Formatter('%(asctime)s', '%Y-%m-%d %H:%M:%S').format(logging.LogRecord('', 0, '', 0, '', '', None))
+    logMessage = f"{timestamp} - SIDE: {side} | Amount: {amount} | Price: {price} | Order ID: {order_id}\n"
+    # Write directly to the file
+    with open(logFile, 'a') as f:
+        f.write(logMessage)
+
+def alertLogger(type, symbol, side, amount, price, cycleBuy):
+    logFile = f"logs/{type.lower()}_{symbol.lower()}_signal.log"
+    timestamp = logging.Formatter('%(asctime)s', '%Y-%m-%d %H:%M:%S').format(logging.LogRecord('', 0, '', 0, '', '', None))
+    logMessage = f"{timestamp} - SIDE: {side} | Amount: {amount} | Price: {price} | Buy number: {cycleBuy}\n"
+    # Write directly to the file
+    with open(logFile, 'a') as f:
+        f.write(logMessage)
 
 class WebhookPayload(BaseModel):
     event: str
     data: dict
-
-# Async function to write to RawCompass file
-async def writeUnfilteredSignals(exchange, asset, side, amount, price, cycleBuy):
-    """Write received order details in logs directory to check when debugging TV"""
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    filename = f"logs/RawCompass.{exchange}.{asset}"
-    try:
-        async with aiofiles.open(filename, 'a') as file:
-            await file.write(f"{timestamp} | {side} | Amount: {amount} | Price: {price} | cycleBuy: {cycleBuy}\n")
-    except Exception as e:
-        print(f"Error writing to RawCompass file: {e}")
 
 @app.post("/")
 async def webhook(request: Request):
@@ -72,28 +72,28 @@ async def webhook(request: Request):
         
         # Extract required fields from the payload
         symbol = data.get("symbol")
+        ticker = hyperliquid_symbol_mapper.get(symbol)
         amount = int(data.get("amount"))  # can be dynamic, as long as > 11$
         leverage = int(data.get("leverage"))
-        price = int(data.get("price"))
-        ticker = hyperliquid_symbol_mapper.get(symbol)
+        price = float(data.get("price"))
+        cycleBuy = 1
 
         if not ticker or not leverage or not amount:
             return {"status": "error", "message": f"Invalid or lacking payload"}
         
         ### log the raw received signal
-        print(f"writing data {ticker} {event}, {amount}, {price}")
-        await writeUnfilteredSignals("hyperliquid", ticker, event, amount, price)
-        print("data written")
+        alertLogger("raw", ticker, event, amount, price, cycleBuy)
+        
         ### Add the dsr checker here, if permission given to buy, buy else exit, or add it under case of buy event, we will see
         print(f"checking event {event}")
         # Case of market buy
         if event == "buy":
-            leverage = await bot.setLeverage(leverage=leverage, symbol=ticker)
-            order = await bot.leveragedMarketOrder(symbol=ticker, side="Buy", amount=amount)
+            leverage = await bot.setLeverage(leverage, ticker)
+            order = await bot.leveragedMarketOrder(ticker, "Buy", amount)
             if order[0] == None:
                 return {"status": "error", "message": "Failed to execute buy order"}
             # Log the order details
-            logging.info(f"BUY | Amount: {amount} | Price: {order[0]} | Order ID: {order[1]}")
+            orderLogger(ticker, "BUY", amount, order[0], order[1])
             return {
                 "status": "buy order success", 
                 "message": "Buy order executed", 
@@ -102,11 +102,11 @@ async def webhook(request: Request):
             
         # Case of market close order/ TODO: case of shorting
         elif event == "sell":
-            order = await bot.leveragedMarketOrder(symbol=ticker, side="Sell", amount=amount)
+            order = await bot.leveragedMarketOrder(ticker, "Sell", amount)
             if order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
             # Log the order details
-            logging.info(f"SELL | Amount: {amount} | Price: Price: {order[0]} | Order ID: {order[1]}")
+            orderLogger(ticker, "SELL", amount, order[0], order[1])
             return {
                 "status": "sell order success", 
                 "message": "Sell order executed", 
