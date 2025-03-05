@@ -76,7 +76,7 @@ async def webhook(request: Request):
         amount = int(data.get("amount"))  # can be dynamic, as long as > 11$
         leverage = int(data.get("leverage"))
         price = float(data.get("price"))
-        cycleBuy = 1
+        cycleBuy = int(data.get("cycleBuys"))
 
         if not ticker or not leverage or not amount:
             return {"status": "error", "message": f"Invalid or lacking payload"}
