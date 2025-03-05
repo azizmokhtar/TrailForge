@@ -82,7 +82,7 @@ async def webhook(request: Request):
             return {"status": "error", "message": f"Invalid or lacking payload"}
         
         ### log the raw received signal
-        alertLogger("raw", ticker, event, amount, price, cycleBuy)
+        alertLogger("raw", symbol, event, amount, price, cycleBuy)
         
         ### Add the dsr checker here, if permission given to buy, buy else exit, or add it under case of buy event, we will see
         print(f"checking event {event}")
@@ -93,7 +93,7 @@ async def webhook(request: Request):
             if order[0] == None:
                 return {"status": "error", "message": "Failed to execute buy order"}
             # Log the order details
-            orderLogger(ticker, "BUY", amount, order[0], order[1])
+            orderLogger(symbol, "BUY", amount, order[0], order[1])
             return {
                 "status": "buy order success", 
                 "message": "Buy order executed", 
@@ -106,7 +106,7 @@ async def webhook(request: Request):
             if order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
             # Log the order details
-            orderLogger(ticker, "SELL", amount, order[0], order[1])
+            orderLogger(symbol, "SELL", amount, order[0], order[1])
             return {
                 "status": "sell order success", 
                 "message": "Sell order executed", 
