@@ -82,10 +82,11 @@ async def webhook(request: Request):
             return {"status": "error", "message": f"Invalid or lacking payload"}
         
         ### log the raw received signal
+        print(f"writing data {ticker} {event}, {amount}, {price}, {cycleBuys}")
         await writeUnfilteredSignals("hyperliquid", ticker, event, amount, price, cycleBuys)
-        
+        print("data written")
         ### Add the dsr checker here, if permission given to buy, buy else exit, or add it under case of buy event, we will see
-            
+        print(f"checking event {event}")
         # Case of market buy
         if event == "buy":
             leverage = await bot.setLeverage(leverage=leverage, symbol=ticker)
