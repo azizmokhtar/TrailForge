@@ -72,18 +72,17 @@ async def webhook(request: Request):
         
         # Extract required fields from the payload
         symbol = data.get("symbol")
-        amount = data.get("amount")  # can be dynamic, as long as > 11$
-        leverage = data.get("leverage")
-        cycleBuys = data.get("CBuys")
-        price = data.get("price")
+        amount = int(data.get("amount"))  # can be dynamic, as long as > 11$
+        leverage = int(data.get("leverage"))
+        price = int(data.get("price"))
         ticker = hyperliquid_symbol_mapper.get(symbol)
 
         if not ticker or not leverage or not amount:
             return {"status": "error", "message": f"Invalid or lacking payload"}
         
         ### log the raw received signal
-        print(f"writing data {ticker} {event}, {amount}, {price}, {cycleBuys}")
-        await writeUnfilteredSignals("hyperliquid", ticker, event, amount, price, cycleBuys)
+        print(f"writing data {ticker} {event}, {amount}, {price}")
+        await writeUnfilteredSignals("hyperliquid", ticker, event, amount, price)
         print("data written")
         ### Add the dsr checker here, if permission given to buy, buy else exit, or add it under case of buy event, we will see
         print(f"checking event {event}")
