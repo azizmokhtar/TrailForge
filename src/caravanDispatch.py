@@ -2,13 +2,14 @@ from fastapi import FastAPI, Request, HTTPException
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 import logging
-import aiofiles
-from datetime import datetime
+import asyncio
 from src.hyperliquid import hyperLiquid
 from config.hyperliquid_symbol_map import hyperliquid_symbol_mapper
+from src.truthCompass import truthCompass
 
 # Global bot instance that will be initialized at startup
 bot = None
+filter = None
 
 # Define lifespan context manager
 @asynccontextmanager
@@ -43,7 +44,7 @@ def orderLogger(symbol, side, amount, price, order_id):
 def alertLogger(type, symbol, side, amount, price, cycleBuy):
     logFile = f"logs/{type.lower()}_{symbol.lower()}_signal.log"
     timestamp = logging.Formatter('%(asctime)s', '%Y-%m-%d %H:%M:%S').format(logging.LogRecord('', 0, '', 0, '', '', None))
-    logMessage = f"{timestamp} - SIDE: {side} | Amount: {amount} | Price: {price} | Buy number: {cycleBuy}\n"
+    logMessage = f"{timestamp} - Symbol: {symbol} | Side: {side} | Amount: {amount} | Price: {price} | Buy number: {cycleBuy}\n"
     # Write directly to the file
     with open(logFile, 'a') as f:
         f.write(logMessage)
@@ -81,13 +82,18 @@ async def webhook(request: Request):
         if not ticker or not leverage or not amount:
             return {"status": "error", "message": f"Invalid or lacking payload"}
         
-        ### log the raw received signal
-        alertLogger("raw", symbol, event, amount, price, cycleBuy)
+        # Run all truthCompass operations in a thread pool
+        def process_signal():
+            tracker = truthCompass(symbol)
+            tracker.addNewSignal("raw", symbol, event, price, cycleBuy)
+            tracker.save()
+            return tracker.checkAndUpdate(symbol, event, price, cycleBuy)
+
+        checker = await asyncio.to_thread(process_signal)
         
-        ### Add the dsr checker here, if permission given to buy, buy else exit, or add it under case of buy event, we will see
         print(f"checking event {event}")
         # Case of market buy
-        if event == "buy":
+        if event == "buy" and checker == 0:
             leverage = await bot.setLeverage(leverage, ticker)
             order = await bot.leveragedMarketOrder(ticker, "Buy", amount)
             if order[0] == None:
@@ -101,7 +107,7 @@ async def webhook(request: Request):
             }
             
         # Case of market close order/ TODO: case of shorting
-        elif event == "sell":
+        elif event == "sell" and checker == 0:
             order = await bot.leveragedMarketOrder(ticker, "Sell", amount)
             if order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
