@@ -15,28 +15,43 @@ class truthCompass:
         # Get file paths
         self.dsrFilePath, self.rawFilePath = self.getFilepath(symbol)
         
-        # Load existing data or create empty DataFrame
+        # Define schema with explicit types to prevent type mismatches
+        self.schema = {
+            "timestamp": pl.Datetime,
+            "symbol": pl.Utf8,
+            "side": pl.Utf8,
+            "price": pl.Float64,
+            "cycleBuy": pl.Int64,
+        }
+        
+        # Load existing data or create empty DataFrame with explicit schema
         if os.path.exists(self.rawFilePath):
             self.rawFile = pl.read_parquet(self.rawFilePath)
         else:
-            self.rawFile = pl.DataFrame({
-                "timestamp": [],
-                "symbol": [],
-                "side": [],
-                "price": [],
-                "cycleBuy": [],
-            })
+            self.rawFile = pl.DataFrame(
+                {
+                    "timestamp": [],
+                    "symbol": [],
+                    "side": [],
+                    "price": [],
+                    "cycleBuy": [],
+                },
+                schema=self.schema
+            )
             
         if os.path.exists(self.dsrFilePath):
             self.dsrFile = pl.read_parquet(self.dsrFilePath)
         else:
-            self.dsrFile = pl.DataFrame({
-                "timestamp": [],
-                "symbol": [],
-                "side": [],
-                "price": [],
-                "cycleBuy": [],
-            })
+            self.dsrFile = pl.DataFrame(
+                {
+                    "timestamp": [],
+                    "symbol": [],
+                    "side": [],
+                    "price": [],
+                    "cycleBuy": [],
+                },
+                schema=self.schema
+            )
     
     def getFilepath(self, symbol):
         """Generate filepath for storing order history."""
@@ -117,14 +132,14 @@ class truthCompass:
             cycleBuy = int(cycleBuy)
             side = str(side)
 
-            # Signal is new, create a new row
+             # Create new row with explicit types
             new_row = pl.DataFrame([{
                 "timestamp": timestamp,
                 "symbol": symbol,
                 "side": side,
                 "price": price,
                 "cycleBuy": cycleBuy
-            }])
+            }], schema=self.schema)
 
             # Add to the appropriate file
             if type == "raw":
