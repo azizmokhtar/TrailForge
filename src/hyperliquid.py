@@ -71,6 +71,8 @@ class hyperLiquid:
     
     #===============================================================================================================
     # MANIPULATION functions for according exchange account (for now only futures is taken into consideration, future changes coming)
+    # TODO: + check_order_status function for order failure 
+    #       + add post only/ limit order fonctionality for something other than TV alerts, since they need urgent execution.. unless my pinescipts plots tp and dca levels
     #===============================================================================================================
     
     async def setLeverage(self, leverage, symbol):
@@ -83,12 +85,12 @@ class hyperLiquid:
     async def leveragedMarketOrder(self, symbol, side, amount):
         try:
             # Fetch the current price for the symbol
-            ticker_data = await self.fetchTicker(symbol) # DO NOT USE AWAIT WITH CCCXT REST SORDERS 
+            ticker_data = await self.fetchTicker(symbol) #  
             if not ticker_data:
-                print("Failed to fetch ticker data.")
+                print("Failed to fetch ticker data for placing a market order!")
                 return None, None
 
-            price = ticker_data["ask"] if side == "Buy" else ticker_data["bid"]
+            price = ticker_data["ask"] if side.lower() == "buy" else ticker_data["bid"]
             # Calculate the amount (in base asset) to achieve the desired order value
             amount_in_base = amount / price
             # Place the market order
@@ -97,7 +99,6 @@ class hyperLiquid:
                 side=side.lower(),
                 amount=amount_in_base,
                 price=price,
-                params={'reduceOnly': True} if side == "Sell" else {}
             )
             # Extract relevant information from the order response
             buy_price = order['info']['filled']['avgPx']
@@ -105,7 +106,35 @@ class hyperLiquid:
 
             return buy_price, order_id
         except Exception as e:
-            print(f"Error placing leveraged market order: {e}")
+            print(f"Error placing leveraged market {side} order: {e}")
+            return None, None
+        
+    async def leveragedMarketCloseOrder(self, symbol, side_to_close, amount):
+        try:
+            # Fetch the current price for the symbol
+            ticker_data = await self.fetchTicker(symbol) # DO NOT USE AWAIT WITH CCCXT REST SORDERS 
+            if not ticker_data:
+                print("Failed to fetch ticker data for closing a market order!")
+                return None, None
+
+            price = ticker_data["ask"] if side_to_close.lower() == "buy" else ticker_data["bid"]
+            # Calculate the amount (in base asset) to achieve the desired order value
+            amount_in_base = amount / price
+            # Place the market order
+            order =  self.exchange.create_market_order(
+                symbol=symbol,
+                side="sell" if side_to_close.lower()== "buy" else "buy",
+                amount=amount_in_base,
+                price=price,
+                params={'reduceOnly': True}
+            )
+            # Extract relevant information from the order response
+            buy_price = order['info']['filled']['avgPx']
+            order_id = order['info']['filled']['oid']
+
+            return buy_price, order_id
+        except Exception as e:
+            print(f"Error placing leveraged market close order: {e}")
             return None, None
 
     

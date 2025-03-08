@@ -13,4 +13,8 @@ hyperliquid_symbol_mapper = {
     "bch": "BCH/USDC:USDC",
     "apt": "APT/USDC:USDC",
     "xlm": "XLM/USDC:USDC",
+    "aave": "AAVE/USDC:USDC",
+    "ton": "TON/USDC:USDC",
+    "bnb": "BNB/USDC:USDC",
+    "rune": "RUNE/USDC:USDC"
 }

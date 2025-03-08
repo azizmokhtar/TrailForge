@@ -1,3 +1,10 @@
+#====================================================================================================
+# caravanDispatch is a module of TrailForge that takes care specifically of trading following tradingview signals.
+# Starting with market orders execution for fast in and out of the market movements; it will give option to benefit of the upcoming module "WaterAndGold" in the future.
+# caravanDispatch now only takes care of buy signalling, there will be also an appropriate modular symmetric version for shrting purposes with the same functionalities. 
+# WaterAndGold will take care of buy lots layering and tp calculations.
+#====================================================================================================
+
 from fastapi import FastAPI, Request, HTTPException
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
@@ -11,7 +18,6 @@ from src.truthCompass import truthCompass
 bot = None
 filter = None
 
-# Define lifespan context manager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Initialize the bot
@@ -23,11 +29,9 @@ async def lifespan(app: FastAPI):
     
     yield  # This is where FastAPI serves requests
     
-    # Shutdown: Cleanup (if needed)
     print("Shutting down trading bot...")
-    # Add any cleanup code here if needed
+    # TODO: any cleanup code here if needed
 
-# Initialize FastAPI app with lifespan
 app = FastAPI(lifespan=lifespan)
 
 # logger configs for both executed orders and also alerts ( raw and filtered )
@@ -108,7 +112,7 @@ async def webhook(request: Request):
             
         # Case of market close order/ TODO: case of shorting
         elif event == "sell" and checker == 0:
-            order = await bot.leveragedMarketOrder(ticker, "Sell", amount)
+            order = await bot.leveragedMarketCloseOrder(ticker, "buy", amount)
             if order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
             # Log the order details
@@ -117,7 +121,7 @@ async def webhook(request: Request):
                 "status": "sell order success", 
                 "message": "Sell order executed", 
                 "result": [{order[0]}, {order[1]}]
-            }
+            }       
             
         else:
             return {"status": "error", "message": f"Unknown event: {event}"}
