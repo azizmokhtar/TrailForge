@@ -16,5 +16,6 @@ hyperliquid_symbol_mapper = {
     "aave": "AAVE/USDC:USDC",
     "ton": "TON/USDC:USDC",
     "bnb": "BNB/USDC:USDC",
-    "rune": "RUNE/USDC:USDC"
+    "rune": "RUNE/USDC:USDC",
+    "hype": "HYPE/USDC:USDC"
 }

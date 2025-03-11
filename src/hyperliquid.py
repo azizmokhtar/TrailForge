@@ -137,4 +137,15 @@ class hyperLiquid:
             print(f"Error placing leveraged market close order: {e}")
             return None, None
 
+    async def createLimitBuyOrders(self, symbol, prices, amount):
+        try:
+            for i in prices:
+                amount_in_base = amount / i
+                self.exchange.create_limit_buy_order(symbol, amount_in_base, i)
+            return 1
+
+        except Exception as e:
+            print(f"Error placing leveraged limit DCA orders: {e}")
+            return 0
+
     

@@ -1,8 +1,8 @@
 #====================================================================================================
 # caravanDispatch is a module of TrailForge that takes care specifically of trading following tradingview signals.
-# Starting with market orders execution for fast in and out of the market movements; it will give option to benefit of the upcoming module "WaterAndGold" in the future.
+# Starting with market orders execution for fast in and out of the market movements; it will give option to benefit of the upcoming module "sandLayerAnalyzer" in the future.
 # caravanDispatch now only takes care of buy signalling, there will be also an appropriate modular symmetric version for shrting purposes with the same functionalities. 
-# WaterAndGold will take care of buy lots layering and tp calculations.
+# sandLayerAnalyzer will take care of buy lots layering and tp calculations.
 #====================================================================================================
 
 from fastapi import FastAPI, Request, HTTPException
@@ -11,8 +11,9 @@ from pydantic import BaseModel
 import logging
 import asyncio
 from src.hyperliquid import hyperLiquid
-from config.hyperliquid_symbol_map import hyperliquid_symbol_mapper
+from src.sandLayerAnalyzer import sandLayerAnalyzer
 from src.truthCompass import truthCompass
+from config.hyperliquid_symbol_map import hyperliquid_symbol_mapper
 
 # Global bot instance that will be initialized at startup
 bot = None
@@ -78,7 +79,7 @@ async def webhook(request: Request):
         # Extract required fields from the payload
         symbol = data.get("symbol")
         ticker = hyperliquid_symbol_mapper.get(symbol)
-        amount = int(data.get("amount"))  # can be dynamic, as long as > 11$
+        amount = int(data.get("amount"))  # can be dynamic, as long as > 11 dollars
         leverage = int(data.get("leverage"))
         price = float(data.get("price"))
         cycleBuy = int(data.get("cycleBuys"))
@@ -98,30 +99,37 @@ async def webhook(request: Request):
         print(f"checking event {event}")
         # Case of market buy
         if event == "buy" and checker == 0:
-            leverage = await bot.setLeverage(leverage, ticker)
-            order = await bot.leveragedMarketOrder(ticker, "Buy", amount)
-            if order[0] == None:
-                return {"status": "error", "message": "Failed to execute buy order"}
-            # Log the order details
+            if cycleBuy == 1:
+                leverage = await bot.setLeverage(leverage, ticker)
+                order = await bot.leveragedMarketOrder(ticker, "Buy", amount)
+                if order[0] == None:
+                    return {"status": "error", "message": "Failed to execute buy order"}
+                # Log the order details
+                buyPrice = order [0]
+                # calculate and execute dca limit orders
+                dcaCalculator = sandLayerAnalyzer(buyPrice)
+                dcaLevels = dcaCalculator.linearDcaCalculator(12, 1)
+                limitOrderExecution = await bot.createLimitBuyOrders(ticker, dcaLevels, amount)
+                if limitOrderExecution == 0:
+                    return {"status": "error", "message": "Failed to execute limit dca orders"}
+            if cycleBuy > 12:
+                order = await bot.leveragedMarketOrder(ticker, "Buy", amount)
+                if order[0] == None:
+                    return {"status": "error", "message": "Failed to execute buy order"}
+
+            # I will leave the sell order to market for better execution of TTP (TTP calculations happen on tradingview, for now..)
+            # TODO: GO over to hyperliquid class and add a function that places limit orders over a loop
             orderLogger(symbol, "BUY", amount, order[0], order[1])
-            return {
-                "status": "buy order success", 
-                "message": "Buy order executed", 
-                "result": [{order[0]}, {order[1]}]
-            }
+            return {"status": "buy order success", "message": "Buy order executed", "result": [{order[0]}, {order[1]}]}
             
-        # Case of market close order/ TODO: case of shorting
+        # Case of market close order/ TODO: case of shorting.. after time thinking , this will be maybe implemented in another script, maybe to run only shorts with stop losses since "dumps have bottoms, but pumps have no ceiling..."
         elif event == "sell" and checker == 0:
             order = await bot.leveragedMarketCloseOrder(ticker, "buy", amount)
             if order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
             # Log the order details
             orderLogger(symbol, "SELL", amount, order[0], order[1])
-            return {
-                "status": "sell order success", 
-                "message": "Sell order executed", 
-                "result": [{order[0]}, {order[1]}]
-            }       
+            return {"status": "sell order success", "message": "Sell order executed", "result": [{order[0]}, {order[1]}]}       
             
         else:
             return {"status": "error", "message": f"Unknown event: {event}"}
