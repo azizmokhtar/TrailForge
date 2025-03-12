@@ -148,4 +148,11 @@ class hyperLiquid:
             print(f"Error placing leveraged limit DCA orders: {e}")
             return 0
 
-    
+    async def cancelLimitOrders(self, symbol):
+        try:
+            cancelled_order = self.exchange.cancel_all_orders(symbol)
+            return cancelled_order
+        
+        except Exception as e:
+            print(f"Error cancelling limit orders: {e}")
+            return None

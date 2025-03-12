@@ -109,16 +109,17 @@ async def webhook(request: Request):
                 # calculate and execute dca limit orders
                 dcaCalculator = sandLayerAnalyzer(buyPrice)
                 dcaLevels = dcaCalculator.linearDcaCalculator(12, 1)
+                # Goes over to hyperliquid class and add a function that places limit orders over a loop
                 limitOrderExecution = await bot.createLimitBuyOrders(ticker, dcaLevels, amount)
                 if limitOrderExecution == 0:
                     return {"status": "error", "message": "Failed to execute limit dca orders"}
+            # If cycleBuys gets over 12 (chosen number to keep time complexity low), the program gets to alternative entry as market order
             if cycleBuy > 12:
                 order = await bot.leveragedMarketOrder(ticker, "Buy", amount)
                 if order[0] == None:
                     return {"status": "error", "message": "Failed to execute buy order"}
 
             # I will leave the sell order to market for better execution of TTP (TTP calculations happen on tradingview, for now..)
-            # TODO: GO over to hyperliquid class and add a function that places limit orders over a loop
             orderLogger(symbol, "BUY", amount, order[0], order[1])
             return {"status": "buy order success", "message": "Buy order executed", "result": [{order[0]}, {order[1]}]}
             
@@ -127,6 +128,10 @@ async def webhook(request: Request):
             order = await bot.leveragedMarketCloseOrder(ticker, "buy", amount)
             if order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
+            # TODO: Cancle all limit orders
+            cancelledOrders = await bot.cancelLimitOrders(ticker)
+            if cancelledOrders == None :
+                return {"status": "error", "message": "Failed to cancel limit orders"}
             # Log the order details
             orderLogger(symbol, "SELL", amount, order[0], order[1])
             return {"status": "sell order success", "message": "Sell order executed", "result": [{order[0]}, {order[1]}]}       
