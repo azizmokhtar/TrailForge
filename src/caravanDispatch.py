@@ -114,7 +114,7 @@ async def webhook(request: Request):
             
         # Case of market close order/ TODO: case of shorting
         elif event == "sell" and checker == 0:
-            order = await bot.leveragedMarketOrder(ticker, "Sell", amount)
+            order = await bot.leveragedMarketCloseOrder(ticker, "buy", amount)
             if order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
             # Log the order details
