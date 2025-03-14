@@ -3,7 +3,7 @@ import json
 import time
 import polars as pl
 from datetime import datetime, timedelta
-
+# TODO: still i get some double buys like with sui, on 14/03 At 15:17
 class truthCompass:
     def __init__(self, symbol, ttl=30*86400):
         """Initialize truthCompass with data directory and TTL in seconds."""
