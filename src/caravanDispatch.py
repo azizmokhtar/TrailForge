@@ -99,22 +99,26 @@ async def webhook(request: Request):
         
         print(f"checking event {event}")
         # Case of market buy
-        if event == "buy" and checker == 0:
+        if event == "buy" and checker == 0 and cycleBuy == 1:
             leverage = await bot.setLeverage(leverage, ticker)
             order = await bot.leveragedMarketOrder(ticker, "Buy", amount)
             if order[0] == None:
                 return {"status": "error", "message": "Failed to execute buy order"}
+            deviations = await bot.create_limit_deviation_list(11, 1.6)
+            limit_orders = await bot.create_batch_limit_buy_order_custom_dca(price, 11, 1, ticker, deviations )
             # Log the order details
             orderLogger(symbol, "BUY", amount, order[0], order[1])
             return {
                 "status": "buy order success", 
                 "message": "Buy order executed", 
                 "result": [{order[0]}, {order[1]}]
-            }
+                }
+            
             
         # Case of market close order/ TODO: case of shorting
         elif event == "sell" and checker == 0:
-            order = await bot.leveragedMarketCloseOrder(ticker, "buy", amount)
+            size = bot.get_position_size(symbol)[1]
+            close_order = bot.leveragedMarketCloseOrder(ticker, "buy",  abs(size))
             if order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
             # Log the order details
