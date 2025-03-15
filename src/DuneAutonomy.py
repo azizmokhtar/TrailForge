@@ -352,7 +352,8 @@ def main():
                 
                 print(f"list is {index}")
                 print(f"list is {row}")
-
+# the exit order hits but it inverses it, meaning a bigger buy than the size, i would do a reduce only option and print the sizes for debugging,
+#also check the symbol at if , what symbol is
 
                 # Now use .at to access a single cell value
                 if trades_dashboard.at[index, 'size'] == 0:

@@ -272,6 +272,7 @@ class hyperLiquid:
     
     async def leveraged_market_close_Order(self, symbol, side_to_close, amount):
         try:
+            print(f"Starting close order for {symbol}!")
             # Fetch the current price for the symbol
             ticker_data = self.exchange.fetch_ticker(symbol)  # Removed await as per your comment
             if not ticker_data:
@@ -279,7 +280,7 @@ class hyperLiquid:
                 return None, None
 
             price = ticker_data["ask"] if side_to_close.lower() == "buy" else ticker_data["bid"]
-
+            print(f"amount to close is  close order for {amount}!")
             # Determine the correct side for closing the position
             close_side = "sell" if side_to_close.lower() == "buy" else "buy"
 
@@ -287,7 +288,7 @@ class hyperLiquid:
             order = self.exchange.create_market_order(
                 symbol=symbol,
                 side=close_side,
-                price=price,
+                price=amount_in_base,
                 amount=amount,
                 params={'reduceOnly': True}
             )
