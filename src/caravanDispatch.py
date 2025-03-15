@@ -19,7 +19,7 @@ deviations = []
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global bot, utility, trades_df, in_pos, SO_number, deviation_pct, deviations
+    global bot, utility, trades_df, in_pos, SO_number, deviation_pct, deviations, deviation_pct
     utility = utils()
     symbols = ["ADA/USDC:USDC", "BTC/USDC:USDC", "SOL/USDC:USDC", "XRP/USDC:USDC", "ATOM/USDC:USDC", "SUI/USDC:USDC"]
     trades_df = utility.create_init_trading_df(symbols)
@@ -37,7 +37,7 @@ class WebhookPayload(BaseModel):# Webhook format
 
 @app.post("/")
 async def webhook(request: Request):
-    global bot, trades_df, utility, deviations
+    global bot, utility, trades_df, in_pos, SO_number, deviation_pct, deviations, deviation_pct
     if bot is None:# Check if bot is initialized
         raise HTTPException(status_code=500, detail="Trading bot not initialized")  
     try:
