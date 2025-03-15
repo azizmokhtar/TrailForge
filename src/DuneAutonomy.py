@@ -296,10 +296,10 @@ def main():
     bot = hyperLiquid()
     utils = Utils()
     TP = 1
-    deviation_pct = 1.6
+    deviation_pct = 1
     leverage = 2
     first_buy_lot = 11
-    symbols = ["SUI/USDC:USDC", "ADA/USDC:USDC", "ATOM/USDC:USDC", "ADA/USDC:USDC", "HYPE/USDC:USDC"]
+    symbols = [ "ADA/USDC:USDC"]
     SO_number = 10
     deviations= bot.create_limit_deviation_list(SO_number, deviation_pct)
 
@@ -336,6 +336,8 @@ def main():
                         #trades_dashboard.loc[trades_dashboard['symbol'] == symbol, 'trade_cycles'] += 1
                         trades_dashboard.at[index, 'dca_buys'] += 1
                         trades_dashboard.at[index, 'limit_orders'] = limit_orders
+                        log_to_file("Current trades dashboard:")
+                        log_to_file(trades_dashboard[['symbol', 'size', 'pnl_pct', 'dca_buys', 'trade_cycles']].to_string())
                         log_to_file(f"Initial buy complete for {symbol} at {avg_price}")
                         print(f"Initial buy complete for {symbol} at {avg_price}")
                         
@@ -368,6 +370,8 @@ def main():
                     #trades_dashboard.loc[trades_dashboard['symbol'] == symbol, 'trade_cycles'] += 1
                     trades_dashboard.at[index, 'dca_buys'] += 1
                     trades_dashboard.at[index, 'limit_orders'] = limit_orders
+                    log_to_file("Current trades dashboarDD:")
+                    log_to_file(trades_dashboard[['symbol', 'size', 'pnl_pct', 'dca_buys', 'trade_cycles']].to_string())
                     print(limit_orders)
                     log_to_file(f"Initial buy complete for {symbol} at {avg_price}")
 
