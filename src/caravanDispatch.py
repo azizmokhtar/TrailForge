@@ -21,7 +21,7 @@ deviations = []
 async def lifespan(app: FastAPI):
     global bot, utility, trades_df, in_pos, SO_number, deviation_pct, deviations
     utility = utils()
-    symbols = ["ADA/USDC:USDC", "BTC/USDC:USDC", "SOL/USDC:USDC", "XRP/USDC:USDC"]
+    symbols = ["ADA/USDC:USDC", "BTC/USDC:USDC", "SOL/USDC:USDC", "XRP/USDC:USDC", "ATOM/USDC:USDC", "SUI/USDC:USDC"]
     trades_df = utility.create_init_trading_df(symbols)
     bot = await hyperLiquid.create()# Create the bot instance and prompt for credentials
     deviations= bot.create_limit_deviation_list(SO_number, deviation_pct)
@@ -37,7 +37,7 @@ class WebhookPayload(BaseModel):# Webhook format
 
 @app.post("/")
 async def webhook(request: Request):
-    global bot
+    global bot, trades_df, utility, deviations
     if bot is None:# Check if bot is initialized
         raise HTTPException(status_code=500, detail="Trading bot not initialized")  
     try:
@@ -91,7 +91,7 @@ async def webhook(request: Request):
             close_order = await bot.leveraged_market_close_Order(ticker, "buy")
             if close_order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
-            await bot.cancelLimitOrders(deviations, symbol, trades_df.at[symbol, 'limit_orders'])
+            await bot.cancelLimitOrders(deviations, ticker, trades_df.at[symbol, 'limit_orders'])
             trades_df = utility.refresh_certain_row(
                 trades_df, 
                 ticker, 
