@@ -296,11 +296,12 @@ def main():
     bot = hyperLiquid()
     utils = Utils()
     TP = 1
-    deviation_pct = 1
+    
     leverage = 2
     first_buy_lot = 11
     symbols = [ "ADA/USDC:USDC"]
     SO_number = 10
+    deviation_pct = 1
     deviations= bot.create_limit_deviation_list(SO_number, deviation_pct)
 
     log_to_file(f"Bot configuration: TP={TP}%, Deviation={deviation_pct}%, Leverage={leverage}x, First buy=${first_buy_lot}")

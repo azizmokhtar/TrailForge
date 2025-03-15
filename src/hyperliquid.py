@@ -270,7 +270,7 @@ class hyperLiquid:
     """
 #=======================================================================================
     
-    async def leveraged_market_close_Order(self, symbol, side_to_close, amount):
+    async def leveraged_market_close_Order(self, symbol, side_to_close):
         try:
             print(f"Starting close order for {symbol}!")
             # Fetch the current price for the symbol
@@ -278,17 +278,18 @@ class hyperLiquid:
             if not ticker_data:
                 print("Failed to fetch ticker data for closing a market order!")
                 return None, None
-
             price = ticker_data["ask"] if side_to_close.lower() == "buy" else ticker_data["bid"]
-            print(f"amount to close is  close order for {amount}!")
+            
             # Determine the correct side for closing the position
             close_side = "sell" if side_to_close.lower() == "buy" else "buy"
-
+            amount = self.get_position_size(symbol)
+            amount = amount[1]
+            print(f"amount to close is {amount}!")
             # Place the market order
             order = self.exchange.create_market_order(
                 symbol=symbol,
                 side=close_side,
-                price=amount_in_base,
+                price=price,
                 amount=amount,
                 params={'reduceOnly': True}
             )
@@ -426,5 +427,5 @@ class hyperLiquid:
         print(f"Cancellation complete: {cancelled_count} orders canceled, {failed_count} failed")
 
         # Return 1 if at least one order was canceled successfully
-        return 1 if cancelled_count > 0 else 0
+        return failed_count if cancelled_count > 0 else 0
 
