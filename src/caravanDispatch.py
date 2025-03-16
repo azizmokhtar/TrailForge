@@ -56,7 +56,7 @@ async def webhook(request: Request):
         price = float(data.get("price"))
         cycleBuy = int(data.get("cycleBuys"))
 
-        if not symbol or not leverage or not amount or not cycleBuy:
+        if not symbol or not leverage or not amount :
             return {"status": "error", "message": f"Invalid or lacking payload"}
         
         ticker = hyperliquid_symbol_mapper.get(symbol)
