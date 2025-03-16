@@ -47,14 +47,3 @@ class utils:
 
 
 
-utilitiy = utils()
-symbols = [ "ADA/USDC:USDC","BTC/USDC:USDC","SOL/USDC:USDC","XRP/USDC:USDC"]
-pdff = utilitiy.create_init_trading_df(symbols)
-print(pdff)
-buys = 3
-refreshed_df = utilitiy.refresh_certain_row(pdff,"ADA/USDC:USDC", dca_buys = buys, size=2 )
-print(refreshed_df)
-symbol_exists = utilitiy.symbol_or_value_exists(refreshed_df, 'symbol', "ADA/USDC:USDC")
-print(symbol_exists)
-three_exists = utilitiy.symbol_or_value_exists(refreshed_df, 'dca_buys', 3)
-print(three_exists)
