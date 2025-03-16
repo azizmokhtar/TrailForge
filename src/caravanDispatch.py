@@ -91,7 +91,7 @@ async def webhook(request: Request):
             print(trades_df)
             print(trades_df.at[ticker, 'open'])
             
-        elif event == "sell" and trades_df.at[ticker, 'open'] == True:
+        if event == "sell" and trades_df.at[ticker, 'open'] == True:
             print(f"closing order")
             close_order = await bot.leveraged_market_close_Order(ticker, "buy")
             if close_order[0] == None :
