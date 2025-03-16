@@ -359,7 +359,9 @@ class hyperLiquid:
     async def create_batch_limit_buy_order_custom_dca(self, pivot_price, base_amount, multiplier, symbol, deviations):
         orders = {}
         first_buy_base_amount = base_amount
+        print(deviations)
         for deviation in deviations:
+            print(deviation)
             price = pivot_price * (1 - deviation/100)
             print(f"price is {price}")
             base_amount = first_buy_base_amount*multiplier
