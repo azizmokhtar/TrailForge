@@ -24,6 +24,7 @@ class utils:
         float_columns = ['dca_buys', 'trade_cycles']
         for col in float_columns:
             df[col] = df[col].astype(int)
+        df['limit_orders'] = df['limit_orders'].apply(lambda x: {} if x == {} else x)
         return df.set_index('symbol')
 
     def refresh_certain_row(self, df, symbol, **kwargs):

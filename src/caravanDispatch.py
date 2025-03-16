@@ -77,7 +77,7 @@ async def webhook(request: Request):
             avg_price = first_buy_order[0]
             
             
-            limit_orders = bot.create_batch_limit_buy_order_custom_dca(avg_price, first_entry_dollar_size, 1, ticker, deviations)
+            limit_orders = await bot.create_batch_limit_buy_order_custom_dca(avg_price, first_entry_dollar_size, 1, ticker, deviations)
             trades_df = utility.refresh_certain_row(
                 trades_df, 
                 ticker, 
