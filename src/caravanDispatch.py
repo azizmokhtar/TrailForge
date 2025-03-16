@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI):
     symbols = ["ADA/USDC:USDC", "BTC/USDC:USDC", "SOL/USDC:USDC", "XRP/USDC:USDC", "ATOM/USDC:USDC", "SUI/USDC:USDC"]
     trades_df = utility.create_init_trading_df(symbols)
     bot = await hyperLiquid.create()# Create the bot instance and prompt for credentials
-    deviations= bot.create_limit_deviation_list(SO_number, deviation_pct)
+    deviations= await bot.create_limit_deviation_list(SO_number, deviation_pct)
     yield  # This is where FastAPI serves requests
     print("Shutting down trading bot...")
     # Add any cleanup code here if needed
