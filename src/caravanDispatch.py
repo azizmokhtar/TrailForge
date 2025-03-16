@@ -69,10 +69,11 @@ async def webhook(request: Request):
 
         print(f"checking event {event}")
         # Case of market buy
-        if event == "buy" and checker == 0 and trades_df.at[ticker, 'open'] == False:
+        if event == "buy"  and trades_df.at[ticker, 'open'] == False:
             first_buy_order = await bot.leveragedMarketOrder(ticker, "buy", amount)
             if first_buy_order[0] == None:
                 return {"status": "error", "message": "Failed to execute buy order"}
+            print(f"order created")
             avg_price = first_buy_order[0]
             
             
@@ -86,8 +87,10 @@ async def webhook(request: Request):
                 last_dca_price=price,
                 limit_orders=limit_orders
             )
+            print(f"params set")
+            print(trades_df)
             
-        elif event == "sell" and checker == 0 and trades_df.at[ticker, 'open'] == True:
+        elif event == "sell" and trades_df.at[ticker, 'open'] == True:
             close_order = await bot.leveraged_market_close_Order(ticker, "buy")
             if close_order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
