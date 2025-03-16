@@ -282,7 +282,7 @@ class hyperLiquid:
             
             # Determine the correct side for closing the position
             close_side = "sell" if side_to_close.lower() == "buy" else "buy"
-            amount = self.get_position_size(symbol)
+            amount = await self.get_position_size(symbol)
             amount = amount[1]
             print(f"amount to close is {amount}!")
             # Place the market order
