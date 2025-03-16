@@ -253,7 +253,7 @@ class hyperLiquid:
                 price=price,
             )
             # Extract relevant information from the order response
-            buy_price = order['info']['filled']['avgPx']
+            buy_price = float(order['info']['filled']['avgPx'])
             order_id = order['info']['filled']['oid']
 
             return buy_price, order_id
