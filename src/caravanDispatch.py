@@ -91,10 +91,13 @@ async def webhook(request: Request):
             print(trades_df)
             
         elif event == "sell" and trades_df.at[ticker, 'open'] == True:
+            print(f"closing order")
             close_order = await bot.leveraged_market_close_Order(ticker, "buy")
             if close_order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
+            print(f"cancelling limit orders")
             await bot.cancelLimitOrders(deviations, ticker, trades_df.at[symbol, 'limit_orders'])
+            print("refreshing df")
             trades_df = utility.refresh_certain_row(
                 trades_df, 
                 ticker, 
