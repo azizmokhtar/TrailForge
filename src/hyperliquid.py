@@ -353,7 +353,7 @@ class hyperLiquid:
     async def create_limit_deviation_list(self, number_of_levels, deviation):
         deviations = []
         for i in range(1, number_of_levels + 1):  # Start from 1 and go up to number_of_levels
-            deviations.append(deviation * i)
+            deviations.append(float(deviation * i))
         return deviations
         
     async def create_batch_limit_buy_order_custom_dca(self, pivot_price, base_amount, multiplier, symbol, deviations):
