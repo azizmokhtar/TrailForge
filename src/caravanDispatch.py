@@ -89,6 +89,7 @@ async def webhook(request: Request):
             )
             print(f"params set")
             print(trades_df)
+            print(trades_df.at[ticker, 'open'])
             
         elif event == "sell" and trades_df.at[ticker, 'open'] == True:
             print(f"closing order")
@@ -96,7 +97,7 @@ async def webhook(request: Request):
             if close_order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
             print(f"cancelling limit orders")
-            await bot.cancelLimitOrders(deviations, ticker, trades_df.at[symbol, 'limit_orders'])
+            await bot.cancelLimitOrders(deviations, ticker, trades_df.at[ticker, 'limit_orders'])
             print("refreshing df")
             trades_df = utility.refresh_certain_row(
                 trades_df, 
