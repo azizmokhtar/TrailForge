@@ -366,7 +366,7 @@ class hyperLiquid:
             print(f"price is {price}")
             base_amount = first_buy_base_amount*multiplier
             amount_in_base = base_amount / price
-            order = await self.exchange.create_limit_buy_order(
+            order = self.exchange.create_limit_buy_order(
             symbol,
             amount_in_base,
             price,
@@ -386,7 +386,7 @@ class hyperLiquid:
             first_buy_base_amount = first_buy_base_amount * multiplier
             amount_in_base = first_buy_base_amount / price
 
-            order = await self.exchange.create_limit_buy_order(
+            order = self.exchange.create_limit_buy_order(
                 symbol,
                 amount_in_base,
                 price,
@@ -417,7 +417,7 @@ class hyperLiquid:
                 order_id = order_ids[deviation]
                 try:
                     # Attempt to cancel this specific order
-                    cancelled_order = await self.exchange.cancel_order(order_id, symbol)
+                    cancelled_order = self.exchange.cancel_order(order_id, symbol)
                     print(f"Successfully canceled order for deviation {deviation}")
                     cancelled_count += 1
                 except Exception as e:
