@@ -202,7 +202,9 @@ class hyperLiquid:
         
     async def get_position_size(self, symbol):
         # First get your account summary and positions DataFrame
-        positions_df = await self.positions()[1]
+        positions_result = await self.positions()
+        # Then access the DataFrame at index 1
+        positions_df = positions_result[1]
         symbol = symbol.upper()
 
         # Check if positions_df exists and is not empty
