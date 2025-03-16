@@ -68,6 +68,11 @@ async def webhook(request: Request):
         checker = await tracker.checkAndUpdate(symbol, event, price, cycleBuy)
 
         print(f"checking event {event}")
+        print(f"Event type: {event}")
+        print(f"Ticker: {ticker}")
+        print(f"Open status: {trades_df.at[ticker, 'open']}")
+        print(f"Buy condition: {event == 'buy' and trades_df.at[ticker, 'open'] == False}")
+        print(f"Sell condition: {event == 'sell' and trades_df.at[ticker, 'open'] == True}")
         # Case of market buy
         if event == "buy"  and trades_df.at[ticker, 'open'] == False:
             first_buy_order = await bot.leveragedMarketOrder(ticker, "buy", amount)
@@ -89,8 +94,7 @@ async def webhook(request: Request):
             )
             print(f"params set")
             print(trades_df)
-            print(trades_df.at[ticker, 'open'])
-            
+           
         if event == "sell" and trades_df.at[ticker, 'open'] == True:
             print(f"closing order")
             close_order = await bot.leveraged_market_close_Order(ticker, "buy")
