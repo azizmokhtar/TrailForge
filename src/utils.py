@@ -18,6 +18,12 @@ class utils:
             })
         # Create DataFrame directly from the list
         df = pd.DataFrame(symbol_data_list)
+        float_columns = ['last_dca_price', 'size', 'dollar_value', 'pnl_pct']
+        for col in float_columns:
+            df[col] = df[col].astype(float)
+        float_columns = ['dca_buys', 'trade_cycles']
+        for col in float_columns:
+            df[col] = df[col].astype(int)
         return df.set_index('symbol')
 
     def refresh_certain_row(self, df, symbol, **kwargs):
