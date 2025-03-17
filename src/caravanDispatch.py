@@ -74,7 +74,7 @@ async def webhook(request: Request):
         print(f"Buy condition: {event == 'buy' and trades_df.at[ticker, 'open'] == False}")
         print(f"Sell condition: {event == 'sell' and trades_df.at[ticker, 'open'] == True}")
         # Case of market buy
-        if event == "buy"  and trades_df.at[ticker, 'open'] == False:
+        if event == "buy"  and trades_df.at[ticker, 'open'] == False and cycleBuy == 1:
             first_buy_order = await bot.leveragedMarketOrder(ticker, "buy", amount)
             if first_buy_order[0] == None:
                 return {"status": "error", "message": "Failed to execute buy order"}
