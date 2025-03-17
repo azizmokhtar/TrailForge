@@ -7,7 +7,7 @@ import time
 async def main():
     ################## VARIABLES ######################## 
     TP = 1  # works as ttp activation also
-    TSL = 0.05
+    TSL = 0.005
     deviations = [1, 1.6, 6, 13, 29]
     multiplier = 2  # to put the average between last so lines
     symbols = ["HYPE/USDC:USDC", "ADA/USDC:USDC"]
@@ -54,6 +54,7 @@ async def main():
             base_currency = symbol.replace("/USDC:USDC", "") # eformat just to fetch openpositions func
             account_data, positions_df = await bot.positions()
             free_balance = account_data['free_balance']
+            print(f"free_balance is : {free_balance}")
             order_size = free_balance * first_buy_pct  # Use first_buy_pct instead of hardcoded 0.1
             if order_size < 11:
                 order_size = 11
@@ -69,6 +70,8 @@ async def main():
                 current_price = float(ticker_data["last"])
                 # Find any rows where the symbol column matches our symbol
                 if utils_instance.symbol_or_value_exists(positions_df, 'symbol', base_currency):
+                    position_data = positions_df[positions_df['symbol'] == base_currency].iloc[0].to_dict()
+                    print(f"pnl pct is: {position_data['pnl_pct']}")
                     position_pnl_pct = position_data['pnl_pct']
                     position_value = position_data['position_value']
                     # Just update our trade tracking df with current position info
@@ -88,13 +91,11 @@ async def main():
 
                     if tsl_triggered[symbol] and ((high_prices[symbol] - current_price) / high_prices[symbol]) > TSL:
                         print(f"TSL triggered for {symbol}, closing position")
-                    close_order = await bot.leveraged_market_close_Order(symbol, "buy")
-                    if close_order[0] is None:
-                        print({"status": "error", "message": "Failed to execute sell order"})
-                    else:
+                        close_order = await bot.leveraged_market_close_Order(symbol, "buy")
+                        if close_order[0] is None:
+                            print({"status": "error", "message": "Failed to execute sell order"})
                         print(f"cancelling limit orders")
                         filled_orders = await bot.cancelLimitOrders(deviations, symbol, trade_df.at[symbol, 'limit_orders'])
-
                         print("refreshing df")
                         trade_df = utils_instance.refresh_certain_row(
                             trade_df,
@@ -181,7 +182,7 @@ async def main():
         print("nothing new")
         print(trade_df)
         print("nothing new, sleeping 60s !")
-        await asyncio.sleep(60)
+        await asyncio.sleep(20)
 
 # Run the main function with asyncio
 if __name__ == "__main__":
