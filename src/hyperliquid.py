@@ -360,24 +360,33 @@ class hyperLiquid:
         
     async def create_batch_limit_buy_order_custom_dca(self, pivot_price, base_amount, multiplier, symbol, deviations):
         orders = {}
-        first_buy_base_amount = base_amount
+        current_amount = base_amount  # Start with the initial amount
         print(deviations)
+
         for deviation in deviations:
-            print(deviation)
+            #print(deviation)
             price = pivot_price * (1 - deviation/100)
-            print(f"price is {price}")
-            base_amount = first_buy_base_amount*multiplier
-            print(f"buy size {base_amount}")
-            amount_in_base = base_amount / price
-            print(f"base size {amount_in_base}")
+           # print(f"price is {price}")
+
+            # Update the amount for each iteration
+            #print(f"buy size {current_amount}")
+
+            # Calculate amount in base currency
+            amount_in_base = current_amount / price
+            #print(f"base size {amount_in_base}")
+
+            # Create the order
             order = self.exchange.create_limit_buy_order(
-            symbol,
-            amount_in_base,
-            price,
-            params={'postOnly': True}
+                symbol,
+                amount_in_base,
+                price,
+                params={'postOnly': True}
             )
-        
+
             orders[deviation] = order['info']['resting']['oid']
+
+            # Update the current_amount for the next iteration
+            current_amount = current_amount * multiplier
 
         return orders
 
