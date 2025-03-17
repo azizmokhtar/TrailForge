@@ -14,7 +14,7 @@ trades_df = None
 in_pos = False
 first_entry_dollar_size = 11
 SO_number = 10
-deviation_pct = 1
+deviation_pct = 1.6
 deviations = []
 
 @asynccontextmanager
