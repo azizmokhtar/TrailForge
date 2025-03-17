@@ -34,7 +34,8 @@ async def main():
             order_size = free_balance * first_buy_pct  # Use first_buy_pct instead of hardcoded 0.1
             if order_size < 11:
                 order_size = 11
-
+                
+            print(positions_df)
             if utils_instance.symbol_or_value_exists(positions_df, 'symbol', symbol):
                 print(f"{symbol} position found")
                 position_entry_price = positions_df.at[symbol, 'entry_price']
@@ -67,7 +68,7 @@ async def main():
                         last_dca_price=0.0,
                         limit_orders={}  # Empty dict instead of 0.0
                     )
-            else:
+            elif trade_df.at[symbol, 'open'] == False:
                 print(f"NO position, opening one for {symbol}")
                 # Need to await this async function
                 await bot.setLeverage(5, symbol)
@@ -97,9 +98,10 @@ async def main():
 
                 print(f"params set")
                 print(trade_df)
-
+            else:
             # Sleep between iterations
-            await asyncio.sleep(5)  # Use asyncio.sleep instead of time.sleep in async functions
+                await asyncio.sleep(5)  # Use asyncio.sleep instead of time.sleep in async functions
+        
         print("nothing new, sleeping 60s !")
         await asyncio.sleep(60)
 

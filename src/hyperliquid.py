@@ -367,7 +367,9 @@ class hyperLiquid:
             price = pivot_price * (1 - deviation/100)
             print(f"price is {price}")
             base_amount = first_buy_base_amount*multiplier
+            print(f"buy size {first_buy_base_amount}")
             amount_in_base = base_amount / price
+            print(f"base size {amount_in_base}")
             order = self.exchange.create_limit_buy_order(
             symbol,
             amount_in_base,
