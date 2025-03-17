@@ -97,11 +97,13 @@ async def main():
                 )
 
                 print(f"params set")
-                print(trade_df)
+            
             else:
             # Sleep between iterations
+                print(f"checked {symbol}, pnl: {positions_df.at[symbol, 'pnl_pct']}")
                 await asyncio.sleep(5)  # Use asyncio.sleep instead of time.sleep in async functions
-        
+        print("nothing new")
+        print(trade_df)
         print("nothing new, sleeping 60s !")
         await asyncio.sleep(60)
 
