@@ -93,6 +93,7 @@ async def webhook(request: Request):
         
         print(f"checking event {event}, ticker: {ticker}, cycleBuys: {cycleBuy}")
         # Case of market buy
+        print(f"checker : {checker}")
         if event == "buy" and checker == 0:
             print("event buy, buying now")
             leverage = await bot.setLeverage(leverage, ticker)
