@@ -109,8 +109,10 @@ class truthCompass:
                     
         # Check if signal exists in DSR file
         if not await asyncio.to_thread(lambda: self.dsrFile.is_empty()):
+            time_window = datetime.now() - timedelta(minutes=2)
             matches = await asyncio.to_thread(
                 lambda: self.dsrFile.filter(
+                    (pl.col("timestamp") > time_window)
                     (pl.col("symbol") == symbol) & 
                     (pl.col("side") == side) & 
                     (pl.col("cycleBuy") == cycleBuy)
