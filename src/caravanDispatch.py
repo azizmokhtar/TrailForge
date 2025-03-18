@@ -89,7 +89,7 @@ async def webhook(request: Request):
         await tracker.addNewSignal("raw", symbol, event, price, cycleBuy)
         await tracker.save()
         # The checkAndUpdate method appears to be synchronous based on your code
-        checker = tracker.checkAndUpdate(symbol, event, price, cycleBuy)
+        checker = await tracker.checkAndUpdate(symbol, event, price, cycleBuy)
         
         print(f"checking event {event}, ticker: {ticker}, cycleBuys: {cycleBuy}")
         # Case of market buy
