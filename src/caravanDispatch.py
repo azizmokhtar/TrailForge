@@ -93,9 +93,10 @@ async def webhook(request: Request):
 
         checker = await asyncio.to_thread(process_signal)
         
-        print(f"checking event {event}")
+        print(f"checking event {event}, ticker: {ticker}, cycleBuys: {cycleBuy}")
         # Case of market buy
         if event == "buy" and checker == 0:
+            print("event buy, buying now")
             leverage = await bot.setLeverage(leverage, ticker)
             order = await bot.leveragedMarketOrder(ticker, "Buy", amount)
             if order[0] == None:
@@ -110,7 +111,8 @@ async def webhook(request: Request):
             
         # Case of market close order/ TODO: case of shorting
         elif event == "sell" and checker == 0:
-            order = await bot.leveragedMarketOrder(ticker, "Sell", amount)
+            print("event sell, selling now")
+            order = await bot.leveraged_market_close_Order(ticker, "buy")
             if order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
             # Log the order details
