@@ -84,14 +84,12 @@ async def webhook(request: Request):
         if not ticker or not leverage or not amount:
             return {"status": "error", "message": f"Invalid or lacking payload"}
         
-        # Run all truthCompass operations in a thread pool
-        def process_signal():
-            tracker = truthCompass(symbol)
-            tracker.addNewSignal("raw", symbol, event, price, cycleBuy)
-            tracker.save()
-            return tracker.checkAndUpdate(symbol, event, price, cycleBuy)
-
-        checker = await asyncio.to_thread(process_signal)
+        # Create the tracker directly in the main async function
+        tracker = truthCompass(symbol)
+        await tracker.addNewSignal("raw", symbol, event, price, cycleBuy)
+        await tracker.save()
+        # The checkAndUpdate method appears to be synchronous based on your code
+        checker = tracker.checkAndUpdate(symbol, event, price, cycleBuy)
         
         print(f"checking event {event}, ticker: {ticker}, cycleBuys: {cycleBuy}")
         # Case of market buy
