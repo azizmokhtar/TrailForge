@@ -1,5 +1,8 @@
-
-
+######################################
+#CHANGES TO IMPLEMENT:
+# solidify truthCompass
+# Better loging system for truthCompass
+# New class for telegram or discord alert signals, it also should go read from truth compass logs to calculate pnl and show it
 from fastapi import FastAPI, Request, HTTPException
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
@@ -8,19 +11,22 @@ import asyncio
 from src.hyperliquid import hyperLiquid
 from config.hyperliquid_symbol_map import hyperliquid_symbol_mapper
 from src.truthCompass import truthCompass
+from src.telegramMessenger import Messenger
 
 # Global bot instance that will be initialized at startup
 bot = None
 filter = None
+telegram = None
 
 # Define lifespan context manager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Initialize the bot
-    global bot
+    global bot, telegram
     print("Initializing trading bot...")
     # Create the bot instance and prompt for credentials
     bot = await hyperLiquid.create()
+    telegram = Messenger()
     print("Bot successfully initialized and ready to receive trading signals.")
     
     yield  # This is where FastAPI serves requests
@@ -57,7 +63,7 @@ class WebhookPayload(BaseModel):
 
 @app.post("/")
 async def webhook(request: Request):
-    global bot
+    global bot, telegram
     
     # Check if bot is initialized
     if bot is None:
@@ -83,25 +89,28 @@ async def webhook(request: Request):
 
         if not ticker or not leverage or not amount:
             return {"status": "error", "message": f"Invalid or lacking payload"}
-        
-        # Create the tracker directly in the main async function
-        tracker = truthCompass(symbol)
-        await tracker.addNewSignal("raw", symbol, event, price, cycleBuy)
-        await tracker.save()
-        # The checkAndUpdate method appears to be synchronous based on your code
-        checker = await tracker.checkAndUpdate(symbol, event, price, cycleBuy)
+
+        dsr = truthCompass()
+        trades = dsr.load_df()
+        checker = dsr.check_if_duplicate(trades, ticker, cycleBuy)
         
         print(f"checking event {event}, ticker: {ticker}, cycleBuys: {cycleBuy}")
         # Case of market buy
         print(f"checker : {checker}")
-        if event == "buy" and checker == 0:
+        if event == "buy" and checker == False:
             print("event buy, buying now")
             leverage = await bot.setLeverage(leverage, ticker)
             order = await bot.leveragedMarketOrder(ticker, "Buy", amount)
             if order[0] == None:
                 return {"status": "error", "message": "Failed to execute buy order"}
             # Log the order details
-            orderLogger(symbol, "BUY", amount, order[0], order[1])
+            trades = dsr.add_new_row(trades, ticker, amount, order[0], cycleBuy, 0, order[1])
+            dsr.save_df_to_file(trades)
+            # Send to telegram 
+            if cycleBuy==1:
+                await telegram.send_message(text=f'- {symbol} Cycle Buy initiated, at price {order[0]}$')
+            else:
+                await telegram.send_message(text=f'- {symbol} DCA number {cycleBuy} executed, at price {order[0]}$')
             return {
                 "status": "buy order success", 
                 "message": "Buy order executed", 
@@ -109,13 +118,16 @@ async def webhook(request: Request):
             }
             
         # Case of market close order/ TODO: case of shorting
-        elif event == "sell" and checker == 0:
+        elif event == "sell" and checker == False:
             print("event sell, selling now")
             order = await bot.leveraged_market_close_Order(ticker, "buy")
             if order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
             # Log the order details
-            orderLogger(symbol, "SELL", amount, order[0], order[1])
+            trades = dsr.add_new_row(trades, ticker, amount, order[0], cycleBuy, 0, order[1])
+            dsr.save_df_to_file(trades)
+            # Send to telegram
+            await telegram.send_message(text=f'- {symbol} cycle complete, exit price {order[0]}$')
             return {
                 "status": "sell order success", 
                 "message": "Sell order executed", 
