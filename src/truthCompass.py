@@ -128,6 +128,8 @@ class truthCompass:
 
     def check_if_duplicate(self,df, symbol, cycleBuy):
         try:
+            print("df:")
+            print(df)
             latest_entry = self.get_latest_for_symbol(df, symbol)
             print(latest_entry)
             if latest_entry is None:
