@@ -37,26 +37,6 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI app with lifespan
 app = FastAPI(lifespan=lifespan)
-
-# logger configs for both executed orders and also alerts ( raw and filtered )
-def orderLogger(symbol, side, amount, price, order_id):
-    # Create a file path for this cryptocurrency
-    logFile = f"logs/executed_{symbol.lower()}.log"
-    # Create a simple message to log
-    timestamp = logging.Formatter('%(asctime)s', '%Y-%m-%d %H:%M:%S').format(logging.LogRecord('', 0, '', 0, '', '', None))
-    logMessage = f"{timestamp} - SIDE: {side} | Amount: {amount} | Price: {price} | Order ID: {order_id}\n"
-    # Write directly to the file
-    with open(logFile, 'a') as f:
-        f.write(logMessage)
-
-def alertLogger(type, symbol, side, amount, price, cycleBuy):
-    logFile = f"logs/{type.lower()}_{symbol.lower()}_signal.log"
-    timestamp = logging.Formatter('%(asctime)s', '%Y-%m-%d %H:%M:%S').format(logging.LogRecord('', 0, '', 0, '', '', None))
-    logMessage = f"{timestamp} - Symbol: {symbol} | Side: {side} | Amount: {amount} | Price: {price} | Buy number: {cycleBuy}\n"
-    # Write directly to the file
-    with open(logFile, 'a') as f:
-        f.write(logMessage)
-
 class WebhookPayload(BaseModel):
     event: str
     data: dict
