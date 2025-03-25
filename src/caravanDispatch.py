@@ -68,6 +68,8 @@ async def webhook(request: Request):
     # Check if bot is initialized
     if bot is None:
         raise HTTPException(status_code=500, detail="Trading bot not initialized")
+    if telegram is None:
+        print("Telegram session could not be established!")
         
     try:
         # Parse the incoming JSON payload

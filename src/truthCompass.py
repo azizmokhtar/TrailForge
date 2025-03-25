@@ -128,24 +128,29 @@ class truthCompass:
 
     def check_if_duplicate(self,df, symbol, cycleBuy):
         try:
-            if self.get_latest_for_symbol(df, symbol)['dca_buys'] == cycleBuy:
-                return False
+            latest_entry = self.get_latest_for_symbol(df, symbol)
+            if latest_entry is None:
+                # No entries for this symbol yet, so not a duplicate
+                return False 
+            if latest_entry['dca_buys'] == cycleBuy:
+                # This would be a duplicate
+                return True
             else:
                 return True
         except Exception as e:
             print(f"Error: {e}")
             return None
 
-bot = truthCompass()
-df = bot.load_df()
-print(df)
-print("____________________________________________________________________")
-df_plus = bot.add_new_row(df, "HYPE/USDC:USDC", 12.1, 9000.0, 0, 0, 00000000000)
-print(df_plus)
-print("____________________________________________________________________")
-print(bot.save_df_to_file(df_plus))
-row = bot.get_latest_for_symbol(df_plus, "HYPE/USDC:USDC")
-print(row['dollar_value'])
-print(row)
-checker = bot.check_if_duplicate(df_plus, "HYPE/USDC:USDC", 0)
-print(checker)
+#bot = truthCompass()
+#df = bot.load_df()
+#print(df)
+#print("____________________________________________________________________")
+#df_plus = bot.add_new_row(df, "HYPE/USDC:USDC", 12.1, 9000.0, 0, 0, 00000000000)
+#print(df_plus)
+#print("____________________________________________________________________")
+#print(bot.save_df_to_file(df_plus))
+#row = bot.get_latest_for_symbol(df_plus, "HYPE/USDC:USDC")
+#print(row['dollar_value'])
+#print(row)
+#checker = bot.check_if_duplicate(df_plus, "HYPE/USDC:USDC", 0)
+#print(checker)
