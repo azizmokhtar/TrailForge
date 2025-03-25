@@ -3,4 +3,5 @@
 
 BOT/
 
-testing/
+testing/__pycache__/
+*.py[cod]
