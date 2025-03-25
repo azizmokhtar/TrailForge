@@ -129,9 +129,11 @@ class truthCompass:
     def check_if_duplicate(self,df, symbol, cycleBuy):
         try:
             latest_entry = self.get_latest_for_symbol(df, symbol)
+            print(latest_entry)
             if latest_entry is None:
                 # No entries for this symbol yet, so not a duplicate
                 return False 
+            print(latest_entry['dca_buys']) 
             if latest_entry['dca_buys'] == cycleBuy:
                 # This would be a duplicate
                 return True
