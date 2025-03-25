@@ -77,7 +77,7 @@ class truthCompass:
         try:
             # Try to load existing file
             filepath = os.path.join("logs", filename)
-            df = pd.read_csv(filepath)
+            df = pd.read_csv(filepath, dtype={'dca_buys': int, 'trade_cycles': int, 'id': int})
 
             # No need to convert timestamp if keeping as float
 
@@ -134,6 +134,7 @@ class truthCompass:
                 # No entries for this symbol yet, so not a duplicate
                 return False 
             print(latest_entry['dca_buys']) 
+
             if latest_entry['dca_buys'] == cycleBuy:
                 # This would be a duplicate
                 return True
