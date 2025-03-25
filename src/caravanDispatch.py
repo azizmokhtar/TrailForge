@@ -1,8 +1,8 @@
 ######################################
 #CHANGES TO IMPLEMENT:
 # solidify truthCompass
-# Better loging system for truthCompass
-# New class for telegram or discord alert signals, it also should go read from truth compass logs to calculate pnl and show it
+# Work on shorting
+# look for feedback
 from fastapi import FastAPI, Request, HTTPException
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
@@ -90,9 +90,9 @@ async def webhook(request: Request):
             dsr.save_df_to_file(trades)
             # Send to telegram 
             if cycleBuy==1:
-                await telegram.send_message(text=f'- {symbol} Cycle Buy initiated, at price {order[0]}$')
+                await telegram.send_message(text=f'- {symbol.upper()} Cycle Buy initiated, at price {order[0]}$')
             else:
-                await telegram.send_message(text=f'- {symbol} DCA number {cycleBuy} executed, at price {order[0]}$')
+                await telegram.send_message(text=f'- {symbol.upper()} DCA number {cycleBuy} executed, at price {order[0]}$')
             return {
                 "status": "buy order success", 
                 "message": "Buy order executed", 
@@ -109,7 +109,7 @@ async def webhook(request: Request):
             trades = dsr.add_new_row(trades, ticker, amount, order[0], cycleBuy, 0, order[1])
             dsr.save_df_to_file(trades)
             # Send to telegram
-            await telegram.send_message(text=f'- {symbol} cycle complete, exit price {order[0]}$')
+            await telegram.send_message(text=f'- {symbol.upper()} cycle complete, exit price {order[0]}$')
             return {
                 "status": "sell order success", 
                 "message": "Sell order executed", 

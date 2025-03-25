@@ -217,7 +217,7 @@ class hyperLiquid:
                 # Return the position value for this coin
                 return float(coin_position['position_value'].values[0]), float(coin_position['size'].values[0])
             else:
-                print(f"No position found for {symbol}")
+                #print(f"No position found for {symbol}") # what s heppeining here
                 return 0,0
         else:
             print("No positions found or error fetching positions")
@@ -287,7 +287,7 @@ class hyperLiquid:
             amount = await self.get_position_size(symbol)
             amount = abs(amount[1])
 
-            print(f"amount to close is {amount}!")
+            #print(f"amount to close is {amount}!") # check, this 0
             # Place the market order
             order = self.exchange.create_market_order(
                 symbol=symbol,
