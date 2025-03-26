@@ -17,16 +17,18 @@ from src.telegramMessenger import Messenger
 bot = None
 filter = None
 telegram = None
+truthcompass = None
 
 # Define lifespan context manager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Initialize the bot
-    global bot, telegram
+    global bot, telegram, truthcompass
     print("Initializing trading bot...")
     # Create the bot instance and prompt for credentials
     bot = await hyperLiquid.create()
     telegram = Messenger()
+    truth_compass = truthCompass()
     print("Bot successfully initialized and ready to receive trading signals.")
     
     yield  # This is where FastAPI serves requests
@@ -75,9 +77,8 @@ async def webhook(request: Request):
 
         availe_open_size = await bot.get_position_size(symbol)
         availe_open_size = availe_open_size[0]
-        dsr = truthCompass()
-        trades = dsr.load_df()
-        checker = dsr.check_if_duplicate(trades, ticker, cycleBuy, availe_open_size) 
+        trades = truthcompass.load_df()
+        checker = truthcompass.check_if_duplicate(trades, ticker, cycleBuy, availe_open_size) 
         
         print(f"checking event {event}, ticker: {ticker}, cycleBuys: {cycleBuy}")
         # Case of market buy
@@ -89,8 +90,8 @@ async def webhook(request: Request):
             if order[0] == None:
                 return {"status": "error", "message": "Failed to execute buy order"}
             # Log the order details
-            trades = dsr.add_new_row(trades, ticker, amount, order[0], cycleBuy, 0, order[1])
-            dsr.save_df_to_file(trades)
+            trades = truthcompass.add_new_row(trades, ticker, amount, order[0], cycleBuy, 0, order[1])
+            truthcompass.save_df_to_file(trades)
             # Send to telegram 
             if cycleBuy==1:
                 await telegram.send_message(text=f'- {symbol.upper()} Cycle Buy initiated, at price {order[0]}$')
@@ -109,8 +110,8 @@ async def webhook(request: Request):
             if order[0] == None :
                 return {"status": "error", "message": "Failed to execute sell order"}
             # Log the order details
-            trades = dsr.add_new_row(trades, ticker, amount, order[0], cycleBuy, 0, order[1])
-            dsr.save_df_to_file(trades)
+            trades = truthcompass.add_new_row(trades, ticker, amount, order[0], cycleBuy, 0, order[1])
+            truthcompass.save_df_to_file(trades)
             # Send to telegram
             await telegram.send_message(text=f'- {symbol.upper()} cycle complete, exit price {order[0]}$')
             return {
