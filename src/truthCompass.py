@@ -141,7 +141,7 @@ class truthCompass:
                 # This would be a duplicate
                 return True
             else:
-                return True
+                return False
         except Exception as e:
             print(f"Error: {e}")
             return None
