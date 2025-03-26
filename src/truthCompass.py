@@ -4,8 +4,6 @@ import time
 import pandas as pd
 import asyncio
 from datetime import datetime, timedelta
-from hyperliquid import hyperLiquid
-
 class truthCompass:
     def __init__(self, ttl=30*86400):
         """Initialize truthCompass with data directory and TTL in seconds."""
