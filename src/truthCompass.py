@@ -4,6 +4,7 @@ import time
 import pandas as pd
 import asyncio
 from datetime import datetime, timedelta
+from hyperliquid import hyperLiquid
 
 class truthCompass:
     def __init__(self, ttl=30*86400):
@@ -126,23 +127,24 @@ class truthCompass:
             print(f"Error: {e}")
             return None
 
-    def check_if_duplicate(self,df, symbol, cycleBuy):
+    def check_if_duplicate(self,df, symbol, cycleBuy, availe_open_size):
         try:
-            print("df:")
-            print(df)
+            #print("df:")
+            #print(df)
             latest_entry = self.get_latest_for_symbol(df, symbol)
-            print(latest_entry)
+            #print(latest_entry)
             if latest_entry is None:
                 # No entries for this symbol yet, so not a duplicate
+                print("no entries, will enter")
                 return False 
-            print(latest_entry['dca_buys']) 
-
-            if latest_entry['dca_buys'] == cycleBuy:
-                # This would be a duplicate
+            #print(latest_entry['dca_buys']) 
+            elif latest_entry['dca_buys'] == cycleBuy and availe_open_size > 0.0: # doing it this way will handle already closed positions manually
+                print("Signal is duplicate, not entering")
                 return True
             else:
+                print(f"Entering dca signal number {cycleBuy}")
                 return False
-        except Exception as e:
+        except Exception as e:    
             print(f"Error: {e}")
             return None
 

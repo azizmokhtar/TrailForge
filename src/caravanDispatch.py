@@ -72,9 +72,12 @@ async def webhook(request: Request):
         if not ticker or not leverage or not amount:
             return {"status": "error", "message": f"Invalid or lacking payload"}
 
+
+        availe_open_size = await bot.get_position_size(symbol)
+        availe_open_size = availe_open_size[0]
         dsr = truthCompass()
         trades = dsr.load_df()
-        checker = dsr.check_if_duplicate(trades, ticker, cycleBuy)
+        checker = dsr.check_if_duplicate(trades, ticker, cycleBuy, availe_open_size) 
         
         print(f"checking event {event}, ticker: {ticker}, cycleBuys: {cycleBuy}")
         # Case of market buy

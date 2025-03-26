@@ -218,10 +218,10 @@ class hyperLiquid:
                 return float(coin_position['position_value'].values[0]), float(coin_position['size'].values[0])
             else:
                 #print(f"No position found for {symbol}") # what s heppeining here
-                return 0,0
+                return 0.0, 0.0
         else:
             print("No positions found or error fetching positions")
-            return 0,0
+            return 0.0, 0.0
 
 #===============================================================================================================
     # MANIPULATION functions for according exchange account (for now only futures is taken into consideration, future changes coming)
