@@ -45,7 +45,7 @@ class WebhookPayload(BaseModel):
 
 @app.post("/")
 async def webhook(request: Request):
-    global bot, telegram
+    global bot, telegram, truthcompass
     
     # Check if bot is initialized
     if bot is None:
