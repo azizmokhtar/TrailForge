@@ -74,28 +74,26 @@ async def webhook(request: Request):
             if not ticker or not leverage or not amount:
                 return {"status": "error", "message": f"Invalid or lacking payload"}
 
-
-            availe_open_size = await bot.get_position_size(symbol)
-            if availe_open_size is not None:
-                availe_open_size = availe_open_size[0]
-            else:
-                availe_open_size = 0.0
             trades = truthcompass.load_df()
-            checker = truthcompass.check_if_duplicate(trades, ticker, cycleBuy, availe_open_size) 
+            checker = truthcompass.check_if_duplicate(trades, ticker, cycleBuy) 
 
             print(f"checking event {event}, ticker: {ticker}, cycleBuys: {cycleBuy}")
             # Case of market buy
             print(f"checker : {checker}")
             if event == "buy" and checker == False:
-                print("event buy, buying now")
+                print("event buy,setting leverage")
                 leverage = await bot.setLeverage(leverage, ticker)
+                print("Executing buy order")
                 order = await bot.leveragedMarketOrder(ticker, "Buy", amount)
                 if order[0] == None:
                     return {"status": "error", "message": "Failed to execute buy order"}
                 # Log the order details
+                print("Add new row to df")
                 trades = truthcompass.add_new_row(trades, ticker, amount, order[0], cycleBuy, 0, order[1])
+                print("savinf df")
                 truthcompass.save_df_to_file(trades)
-                # Send to telegram 
+                # Send to telegram
+                print("saved df, sending telegram notification") 
                 if cycleBuy==1:
                     await telegram.send_message(text=f'- {symbol.upper()} Cycle Buy initiated, at price {order[0]}$')
                 else:

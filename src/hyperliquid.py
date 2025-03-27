@@ -220,7 +220,7 @@ class hyperLiquid:
                 #print(f"No position found for {symbol}") # what s heppeining here
                 return 0.0, 0.0
         else:
-            print("No positions found or error fetching positions")
+            print("No positions found OR error fetching positions")
             return 0.0, 0.0
 
 #===============================================================================================================

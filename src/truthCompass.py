@@ -125,18 +125,20 @@ class truthCompass:
             print(f"Error: {e}")
             return None
 
-    def check_if_duplicate(self,df, symbol, cycleBuy, availe_open_size):
+    def check_if_duplicate(self,df, symbol, cycleBuy):
         try:
-            #print("df:")
-            #print(df)
+            print("df:")
+            print(df)
+            print("getting last entry")
             latest_entry = self.get_latest_for_symbol(df, symbol)
             #print(latest_entry)
             if latest_entry is None:
+                print("Last entry is none, meaning no entry position")
                 # No entries for this symbol yet, so not a duplicate
                 print("no entries, will enter")
                 return False 
             #print(latest_entry['dca_buys']) 
-            elif latest_entry['dca_buys'] == cycleBuy and availe_open_size > 0.0: # doing it this way will handle already closed positions manually
+            elif latest_entry['dca_buys'] == cycleBuy: # doing it this way will handle already closed positions manually
                 print("Signal is duplicate, not entering")
                 return True
             else:
