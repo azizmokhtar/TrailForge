@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
     # Create the bot instance and prompt for credentials
     bot = await hyperLiquid.create()
     telegram = Messenger()
-    truth_compass = truthCompass()
+    truthcompass = truthCompass()
     print("Bot successfully initialized and ready to receive trading signals.")
     
     yield  # This is where FastAPI serves requests
