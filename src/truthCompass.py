@@ -4,14 +4,12 @@ import time
 import pandas as pd
 import asyncio
 from datetime import datetime, timedelta
-import threading 
 class truthCompass:
     def __init__(self, ttl=30*86400):
         """Initialize truthCompass with data directory and TTL in seconds."""
         # Make sure logs directory exists
         os.makedirs("logs", exist_ok=True)
         self.default_ttl = ttl
-        self.lock = threading.Lock()
 
 
 #    def create_init_trading_df(self, symbols_list):
@@ -37,124 +35,116 @@ class truthCompass:
 
     def refresh_certain_row(self, df, symbol, **kwargs):
         # Direct access by index is much faster
-
-            for column, value in kwargs.items():
-                if column in df.columns:
-                    df.at[symbol, column] = value
-            return df
+        for column, value in kwargs.items():
+            if column in df.columns:
+                df.at[symbol, column] = value
+        return df
     
     def symbol_or_value_exists(self, df, column, value):
-
-            if column == 'symbol' and df.index.name == 'symbol':
-                # Check the index instead
-                return value in df.index
-            elif column in df.columns:
-                # Check the column
-                return value in df[column].values
-            else:
-                return False
+        if column == 'symbol' and df.index.name == 'symbol':
+            # Check the index instead
+            return value in df.index
+        elif column in df.columns:
+            # Check the column
+            return value in df[column].values
+        else:
+            return False
     
     def add_new_row(self, df, symbol, dollar_value, buy_price, dca_buys, trade_cycles, id, timestamp=None):
+        # Use current time if no timestamp provided
+        if timestamp is None:
+            timestamp = time.time()
+        else:
+            timestamp = float(timestamp)
 
-            # Use current time if no timestamp provided
-            if timestamp is None:
-                timestamp = time.time()
-            else:
-                timestamp = float(timestamp)
+        # Create a new row without the index columns
+        new_row = {
+            'dollar_value': float(dollar_value),
+            'buy_price': float(buy_price),
+            'dca_buys': int(dca_buys),
+            'trade_cycles': int(trade_cycles),
+            'id': int(id)
+        }
 
-            # Create a new row without the index columns
-            new_row = {
-                'dollar_value': float(dollar_value),
-                'buy_price': float(buy_price),
-                'dca_buys': int(dca_buys),
-                'trade_cycles': int(trade_cycles),
-                'id': int(id)
-            }
+        # Create a DataFrame with the MultiIndex
+        new_row_df = pd.DataFrame([new_row], index=pd.MultiIndex.from_tuples([(symbol, timestamp)], names=['symbol', 'timestamp']))
 
-            # Create a DataFrame with the MultiIndex
-            new_row_df = pd.DataFrame([new_row], index=pd.MultiIndex.from_tuples([(symbol, timestamp)], names=['symbol', 'timestamp']))
-
-            # Concatenate with the existing DataFrame
-            return pd.concat([df, new_row_df])
+        # Concatenate with the existing DataFrame
+        return pd.concat([df, new_row_df])
     
     def load_df(self, filename="trading_data.csv"):
-        with self.lock:
-            try:
-                # Try to load existing file
-                filepath = os.path.join("logs", filename)
-                df = pd.read_csv(filepath, dtype={'dca_buys': int, 'trade_cycles': int, 'id': int})
+        try:
+            # Try to load existing file
+            filepath = os.path.join("logs", filename)
+            df = pd.read_csv(filepath, dtype={'dca_buys': int, 'trade_cycles': int, 'id': int})
 
-                # No need to convert timestamp if keeping as float
+            # No need to convert timestamp if keeping as float
 
-                # Set both symbol and timestamp as a MultiIndex
-                return df.set_index(['symbol', 'timestamp'])
+            # Set both symbol and timestamp as a MultiIndex
+            return df.set_index(['symbol', 'timestamp'])
 
-            except:
-                # File doesn't exist, create empty DataFrame with correct columns
-                df = pd.DataFrame(columns=['dollar_value', 'buy_price', 'dca_buys', 
-                                         'trade_cycles', 'id'])
+        except:
+            # File doesn't exist, create empty DataFrame with correct columns
+            df = pd.DataFrame(columns=['dollar_value', 'buy_price', 'dca_buys', 
+                                     'trade_cycles', 'id'])
 
-                # Create an empty MultiIndex
-                df.index = pd.MultiIndex.from_tuples([], names=['symbol', 'timestamp'])
+            # Create an empty MultiIndex
+            df.index = pd.MultiIndex.from_tuples([], names=['symbol', 'timestamp'])
 
-                # Set correct types
-                df['dollar_value'] = df['dollar_value'].astype(float)
-                df['buy_price'] = df['buy_price'].astype(float)
-                df['dca_buys'] = df['dca_buys'].astype(int)
-                df['trade_cycles'] = df['trade_cycles'].astype(int)
-                df['id'] = df['id'].astype(int)
+            # Set correct types
+            df['dollar_value'] = df['dollar_value'].astype(float)
+            df['buy_price'] = df['buy_price'].astype(float)
+            df['dca_buys'] = df['dca_buys'].astype(int)
+            df['trade_cycles'] = df['trade_cycles'].astype(int)
+            df['id'] = df['id'].astype(int)
 
-                return df
-
+            return df
+        
     def save_df_to_file(self, df, filename="trading_data.csv"):
-        with self.lock:
-            try:
-                filepath = os.path.join("logs", filename)
-                df.to_csv(filepath, index=True)  # Changed to index=True
-                return 1
-            except Exception as e:
-                print(f"Error saving file: {e}")  # Added error message
-                return 0
+        try:
+            filepath = os.path.join("logs", filename)
+            df.to_csv(filepath, index=True)  # Changed to index=True
+            return 1
+        except Exception as e:
+            print(f"Error saving file: {e}")  # Added error message
+            return 0
         
     def get_latest_for_symbol(self, df, symbol):
-        
         """Get the latest entry for a symbol using MultiIndex"""
-        with self.lock:
-            try:
-                # This assumes df has a MultiIndex with (symbol, timestamp)
-                if symbol not in df.index.get_level_values('symbol'):
-                    return None
-
-                # Get all rows for this symbol and sort by timestamp (descending)
-                symbol_data = df.xs(symbol, level='symbol').sort_index(ascending=False)
-
-                # Return the first row (latest timestamp)
-                return symbol_data.iloc[0]
-            except Exception as e:
-                print(f"Error: {e}")
+        try:
+            # This assumes df has a MultiIndex with (symbol, timestamp)
+            if symbol not in df.index.get_level_values('symbol'):
                 return None
+                
+            # Get all rows for this symbol and sort by timestamp (descending)
+            symbol_data = df.xs(symbol, level='symbol').sort_index(ascending=False)
+            
+            # Return the first row (latest timestamp)
+            return symbol_data.iloc[0]
+        except Exception as e:
+            print(f"Error: {e}")
+            return None
 
     def check_if_duplicate(self,df, symbol, cycleBuy, availe_open_size):
-        with self.lock:
-            try:
-                #print("df:")
-                #print(df)
-                latest_entry = self.get_latest_for_symbol(df, symbol)
-                #print(latest_entry)
-                if latest_entry is None:
-                    # No entries for this symbol yet, so not a duplicate
-                    print("no entries, will enter")
-                    return False 
-                #print(latest_entry['dca_buys']) 
-                elif latest_entry['dca_buys'] == cycleBuy and availe_open_size > 0.0: # doing it this way will handle already closed positions manually
-                    print("Signal is duplicate, not entering")
-                    return True
-                else:
-                    print(f"Entering dca signal number {cycleBuy}")
-                    return False
-            except Exception as e:    
-                print(f"Error: {e}")
-                return None
+        try:
+            #print("df:")
+            #print(df)
+            latest_entry = self.get_latest_for_symbol(df, symbol)
+            #print(latest_entry)
+            if latest_entry is None:
+                # No entries for this symbol yet, so not a duplicate
+                print("no entries, will enter")
+                return False 
+            #print(latest_entry['dca_buys']) 
+            elif latest_entry['dca_buys'] == cycleBuy and availe_open_size > 0.0: # doing it this way will handle already closed positions manually
+                print("Signal is duplicate, not entering")
+                return True
+            else:
+                print(f"Entering dca signal number {cycleBuy}")
+                return False
+        except Exception as e:    
+            print(f"Error: {e}")
+            return None
 
 #bot = truthCompass()
 #df = bot.load_df()
