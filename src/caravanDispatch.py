@@ -52,17 +52,17 @@ async def webhook(request: Request):
             raise HTTPException(status_code=500, detail="Trading bot not initialized")
         if telegram is None:
             print("Telegram session could not be established!")
-            
+
         try:
             # Parse the incoming JSON payload
             payload = await request.json()
             print("Received webhook data:", payload)
-            
+
             # Validate the payload against the WebhookPayload model
             webhook_payload = WebhookPayload(**payload)
             event = webhook_payload.event
             data = webhook_payload.data
-            
+
             # Extract required fields from the payload
             symbol = data.get("symbol")
             ticker = hyperliquid_symbol_mapper.get(symbol)
@@ -70,16 +70,19 @@ async def webhook(request: Request):
             leverage = int(data.get("leverage"))
             price = float(data.get("price"))
             cycleBuy = int(data.get("cycleBuys"))
-    
+
             if not ticker or not leverage or not amount:
                 return {"status": "error", "message": f"Invalid or lacking payload"}
-    
-    
+
+
             availe_open_size = await bot.get_position_size(symbol)
-            availe_open_size = availe_open_size[0]
+            if availe_open_size is not None:
+                availe_open_size = availe_open_size[0]
+            else:
+                availe_open_size = 0.0
             trades = truthcompass.load_df()
             checker = truthcompass.check_if_duplicate(trades, ticker, cycleBuy, availe_open_size) 
-            
+
             print(f"checking event {event}, ticker: {ticker}, cycleBuys: {cycleBuy}")
             # Case of market buy
             print(f"checker : {checker}")
@@ -102,7 +105,7 @@ async def webhook(request: Request):
                     "message": "Buy order executed", 
                     "result": [{order[0]}, {order[1]}]
                 }
-                
+
             # Case of market close order/ TODO: case of shorting
             elif event == "sell" and checker == False:
                 print("event sell, selling now")
@@ -119,10 +122,10 @@ async def webhook(request: Request):
                     "message": "Sell order executed", 
                     "result": [{order[0]}, {order[1]}]
                 }
-                
+
             else:
                 return {"status": "error", "message": f"Unknown event: {event}"}
-                
+
         except Exception as e:
             print(f"Error processing webhook: {e}")
             raise HTTPException(status_code=500, detail="Internal server error")
