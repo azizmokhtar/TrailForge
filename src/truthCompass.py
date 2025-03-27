@@ -136,6 +136,7 @@ class truthCompass:
                 print("Last entry is none, meaning no entry position")
                 # No entries for this symbol yet, so not a duplicate
                 print("no entries, will enter")
+                print(f"last entry DCA for {symbol} is {latest_entry['dca_buys'] }")
                 return False 
             #print(latest_entry['dca_buys']) 
             elif latest_entry['dca_buys'] == cycleBuy: # doing it this way will handle already closed positions manually
